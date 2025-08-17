@@ -5,20 +5,41 @@ interface TranslateRequest {
   targetLanguage: string;
 }
 
-interface LibreTranslateResponse {
-  translatedText: string;
+interface MyMemoryResponse {
+  responseData: {
+    translatedText: string;
+    match: number;
+  };
+  quotaFinished: boolean;
+  mtLangSupported: boolean;
+  responseDetails: string;
+  responseStatus: number;
+  responderId: string;
+  exception_code: string | null;
+  matches: Array<{
+    id: string;
+    segment: string;
+    translation: string;
+    source: string;
+    target: string;
+    quality: number;
+    reference: string;
+    'usage-count': number;
+    subject: string;
+    'created-by': string;
+    'last-updated-by': string;
+    'create-date': string;
+    'last-update-date': string;
+    match: number;
+  }>;
 }
 
-interface LibreTranslateError {
-  error: string;
-}
-
-const LIBRETRANSLATE_URL = process.env.LIBRETRANSLATE_URL || 'https://libretranslate.de/translate';
-const LIBRETRANSLATE_API_KEY = process.env.LIBRETRANSLATE_API_KEY;
+// 改用 MyMemory Translation API - 完全免費，無需註冊
+const MYMEMORY_URL = 'https://api.mymemory.translated.net/get';
 
 const languageMap: Record<string, string> = {
   en: 'en',
-  lo: 'lo', 
+  lo: 'en',  // MyMemory 不支援寮語，暫時使用英文
   th: 'th'
 };
 
@@ -44,44 +65,49 @@ export async function POST(request: NextRequest) {
 
     const targetLang = languageMap[targetLanguage];
     
-    const translatePayload = {
-      q: text,
-      source: 'zh',
-      target: targetLang,
-      format: 'text',
-      ...(LIBRETRANSLATE_API_KEY && { api_key: LIBRETRANSLATE_API_KEY })
-    };
+    // MyMemory API 使用 GET 請求，參數在 URL 中
+    const apiUrl = `${MYMEMORY_URL}?q=${encodeURIComponent(text)}&langpair=zh|${targetLang}`;
+    
+    console.log('Translation URL:', apiUrl);
 
-    const response = await fetch(LIBRETRANSLATE_URL, {
-      method: 'POST',
+    const response = await fetch(apiUrl, {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (compatible; AI-Translator/1.0)',
       },
-      body: JSON.stringify(translatePayload),
     });
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('LibreTranslate API Error:', errorData);
+      console.error('MyMemory API Error Response:', response.status, errorData);
       return NextResponse.json(
-        { error: '翻譯服務暫時無法使用' },
+        { error: `翻譯服務錯誤 (${response.status}): ${errorData}` },
         { status: 500 }
       );
     }
 
-    const data: LibreTranslateResponse | LibreTranslateError = await response.json();
+    const data: MyMemoryResponse = await response.json();
+    console.log('MyMemory API Response:', data);
     
-    if ('error' in data) {
+    if (data.responseStatus !== 200) {
       return NextResponse.json(
-        { error: `翻譯失敗: ${data.error}` },
+        { error: `翻譯失敗: ${data.responseDetails}` },
+        { status: 500 }
+      );
+    }
+
+    if (!data.responseData || !data.responseData.translatedText) {
+      return NextResponse.json(
+        { error: '翻譯結果為空' },
         { status: 500 }
       );
     }
 
     return NextResponse.json({
-      translatedText: data.translatedText,
+      translatedText: data.responseData.translatedText,
       sourceLanguage: 'zh',
-      targetLanguage: targetLang
+      targetLanguage: targetLang,
+      match: data.responseData.match
     });
 
   } catch (error) {
