@@ -60,8 +60,15 @@ export default function Home() {
   ];
 
   const startVoiceRecognition = () => {
+    // 檢查是否為 iOS Safari
+    const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent) && !('MSStream' in window);
+    
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      setError("您的瀏覽器不支援語音辨識功能");
+      if (isIOSSafari) {
+        setError("iOS Safari 的語音辨識功能有限制，請嘗試使用 Chrome 或其他瀏覽器");
+      } else {
+        setError("您的瀏覽器不支援語音辨識功能");
+      }
       return;
     }
 
@@ -74,9 +81,15 @@ export default function Home() {
     
     recognitionRef.current = new SpeechRecognition();
     
+    // iOS 特殊設定
     recognitionRef.current.lang = "zh-TW";
     recognitionRef.current.interimResults = false;
     recognitionRef.current.maxAlternatives = 1;
+    
+    // iOS 需要更寬鬆的設定
+    if (isIOSSafari) {
+      recognitionRef.current.lang = "zh";  // iOS 使用較簡單的語言代碼
+    }
 
     recognitionRef.current.onstart = () => {
       setIsListening(true);
@@ -89,7 +102,33 @@ export default function Home() {
     };
 
     recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
-      setError(`語音辨識錯誤: ${event.error}`);
+      let errorMessage = "";
+      
+      switch (event.error) {
+        case "service-not-allowed":
+          errorMessage = "語音辨識服務被拒絕。請檢查瀏覽器權限設定，或嘗試在設定中允許麥克風存取";
+          break;
+        case "not-allowed":
+          errorMessage = "麥克風權限被拒絕。請在瀏覽器設定中允許此網站使用麥克風";
+          break;
+        case "no-speech":
+          errorMessage = "未偵測到語音輸入，請再試一次";
+          break;
+        case "network":
+          errorMessage = "網路連線問題，請檢查網路連線";
+          break;
+        case "audio-capture":
+          errorMessage = "無法存取麥克風，請確認麥克風已連接且正常運作";
+          break;
+        default:
+          if (isIOSSafari) {
+            errorMessage = `iOS Safari 語音功能受限 (${event.error})。建議：1.檢查「設定→Safari→麥克風」權限 2.嘗試使用其他瀏覽器如 Chrome`;
+          } else {
+            errorMessage = `語音辨識錯誤: ${event.error}`;
+          }
+      }
+      
+      setError(errorMessage);
       setIsListening(false);
     };
 
@@ -97,7 +136,13 @@ export default function Home() {
       setIsListening(false);
     };
 
-    recognitionRef.current.start();
+    // 使用 try-catch 包裹 start() 方法
+    try {
+      recognitionRef.current.start();
+    } catch (error) {
+      setError("無法啟動語音辨識，請確認瀏覽器權限設定");
+      setIsListening(false);
+    }
   };
 
   const stopVoiceRecognition = () => {
