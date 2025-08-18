@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # AI 即時翻譯網頁應用程式
 
 支援中文轉英文、寮語、泰語的智能翻譯工具，具備語音輸入功能和響應式設計。
@@ -113,3 +114,6 @@ MIT License
 ---
 
 由 Next.js 和 Claude Code 協力開發 🤖
+=======
+# translator
+>>>>>>> dec25519a3caa6ac64f3c72ae1b26f9f646aecce
