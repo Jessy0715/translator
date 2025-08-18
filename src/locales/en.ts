@@ -1,7 +1,7 @@
 export const en = {
   title: "Real-time Translator",
   subtitle: "Smart translation tool supporting English, Chinese, and Thai",
-  inputLabel: "Input English Text",
+  inputLabel: "Input Text",
   inputPlaceholder: "Enter text to translate, or click the microphone button to start voice input...",
   voiceStart: "Voice Input",
   voiceStop: "Stop Recording",

@@ -65,18 +65,37 @@ export async function POST(request: NextRequest) {
 
     const targetLang = languageMap[targetLanguage];
     
-    // 如果目標語言是中文，直接返回原文
-    if (targetLanguage === 'zh') {
+    // 簡單的語言偵測邏輯
+    const detectSourceLanguage = (text: string): string => {
+      // 檢測中文字符（中日韓統一表意文字）
+      const chineseRegex = /[\u4e00-\u9fff]/;
+      // 檢測泰文字符
+      const thaiRegex = /[\u0e00-\u0e7f]/;
+      
+      if (chineseRegex.test(text)) {
+        return 'zh';
+      } else if (thaiRegex.test(text)) {
+        return 'th';
+      } else {
+        // 預設為英文
+        return 'en';
+      }
+    };
+    
+    const sourceLang = detectSourceLanguage(text);
+    
+    // 如果來源語言和目標語言相同，直接返回原文
+    if (sourceLang === targetLang) {
       return NextResponse.json({
         translatedText: text,
-        sourceLanguage: 'zh',
-        targetLanguage: 'zh',
+        sourceLanguage: sourceLang,
+        targetLanguage: targetLang,
         match: 100
       });
     }
     
     // MyMemory API 使用 GET 請求，參數在 URL 中
-    const apiUrl = `${MYMEMORY_URL}?q=${encodeURIComponent(text)}&langpair=zh|${targetLang}`;
+    const apiUrl = `${MYMEMORY_URL}?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`;
     
     console.log('Translation URL:', apiUrl);
 
@@ -115,7 +134,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       translatedText: data.responseData.translatedText,
-      sourceLanguage: 'zh',
+      sourceLanguage: sourceLang,
       targetLanguage: targetLang,
       match: data.responseData.match
     });
