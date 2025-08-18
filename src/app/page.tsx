@@ -10,6 +10,37 @@ interface TranslationResult {
   targetLanguage: TargetLanguage;
 }
 
+interface SpeechRecognitionEvent {
+  results: {
+    [key: number]: {
+      [key: number]: {
+        transcript: string;
+      };
+    };
+  };
+}
+
+interface SpeechRecognitionErrorEvent {
+  error: string;
+}
+
+interface SpeechRecognition {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onstart: () => void;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onerror: (event: SpeechRecognitionErrorEvent) => void;
+  onend: () => void;
+  start: () => void;
+  stop: () => void;
+}
+
+interface WindowWithSpeechRecognition extends Window {
+  SpeechRecognition: new () => SpeechRecognition;
+  webkitSpeechRecognition: new () => SpeechRecognition;
+}
+
 export default function Home() {
   const [inputText, setInputText] = useState("");
   const [translationResult, setTranslationResult] = useState<TranslationResult | null>(null);
@@ -18,7 +49,7 @@ export default function Home() {
   const [isTranslating, setIsTranslating] = useState(false);
   const [error, setError] = useState("");
   
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const languageOptions = [
     { value: "en", label: "English (英文)" },
@@ -32,7 +63,8 @@ export default function Home() {
       return;
     }
 
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const windowWithSpeech = window as WindowWithSpeechRecognition;
+    const SpeechRecognition = windowWithSpeech.SpeechRecognition || windowWithSpeech.webkitSpeechRecognition;
     recognitionRef.current = new SpeechRecognition();
     
     recognitionRef.current.lang = "zh-TW";
@@ -44,12 +76,12 @@ export default function Home() {
       setError("");
     };
 
-    recognitionRef.current.onresult = (event: any) => {
+    recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
       const speechResult = event.results[0][0].transcript;
       setInputText(speechResult);
     };
 
-    recognitionRef.current.onerror = (event: any) => {
+    recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
       setError(`語音辨識錯誤: ${event.error}`);
       setIsListening(false);
     };
@@ -98,7 +130,7 @@ export default function Home() {
         translatedText: data.translatedText,
         targetLanguage,
       });
-    } catch (err) {
+    } catch {
       setError("翻譯過程中發生錯誤，請稍後再試");
     } finally {
       setIsTranslating(false);
