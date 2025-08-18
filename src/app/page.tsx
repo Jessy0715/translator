@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Mic, MicOff, Languages, Loader2, Globe } from "lucide-react";
+import { Mic, MicOff, Languages, Loader2, Globe, X } from "lucide-react";
 import { locales, type LocaleKey, type Translations, defaultLocale } from "@/locales";
 
 type TargetLanguage = "en" | "zh" | "th";
@@ -162,6 +162,12 @@ export default function Home() {
     setIsListening(false);
   };
 
+  const clearInput = () => {
+    setInputText("");
+    setTranslationResult(null);
+    setError("");
+  };
+
   const handleTranslate = async () => {
     if (!inputText.trim()) {
       setError(t.errors.noText);
@@ -290,6 +296,18 @@ export default function Home() {
                   <Languages size={20} />
                 )}
                 {isTranslating ? t.translating : t.translate}
+              </button>
+
+              {/* Clear Button */}
+              <button
+                onClick={clearInput}
+                disabled={isTranslating || !inputText.trim()}
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-500 text-white 
+                         rounded-md hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed
+                         transition-colors"
+              >
+                <X size={20} />
+                {t.clearInput}
               </button>
             </div>
           </div>

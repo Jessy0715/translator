@@ -1,12 +1,13 @@
 export const en = {
-  title: "AI Real-time Translator",
-  subtitle: "Smart translation tool supporting Chinese to English, Lao, and Thai",
-  inputLabel: "Input Chinese Text",
-  inputPlaceholder: "Enter Chinese text to translate, or click the microphone button to start voice input...",
+  title: "Real-time Translator",
+  subtitle: "Smart translation tool supporting English, Chinese, and Thai",
+  inputLabel: "Input English Text",
+  inputPlaceholder: "Enter text to translate, or click the microphone button to start voice input...",
   voiceStart: "Voice Input",
   voiceStop: "Stop Recording",
   translate: "Start Translation",
   translating: "Translating...",
+  clearInput: "Clear Input",
   resultTitle: "Translation Result",
   listeningStatus: "🎤 Listening to your voice input...",
   languages: {
