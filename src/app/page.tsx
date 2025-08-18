@@ -36,9 +36,11 @@ interface SpeechRecognition {
   stop: () => void;
 }
 
-interface WindowWithSpeechRecognition extends Window {
-  SpeechRecognition: new () => SpeechRecognition;
-  webkitSpeechRecognition: new () => SpeechRecognition;
+declare global {
+  interface Window {
+    SpeechRecognition?: new () => SpeechRecognition;
+    webkitSpeechRecognition?: new () => SpeechRecognition;
+  }
 }
 
 export default function Home() {
@@ -63,8 +65,13 @@ export default function Home() {
       return;
     }
 
-    const windowWithSpeech = window as WindowWithSpeechRecognition;
-    const SpeechRecognition = windowWithSpeech.SpeechRecognition || windowWithSpeech.webkitSpeechRecognition;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      setError("您的瀏覽器不支援語音辨識功能");
+      return;
+    }
+    
     recognitionRef.current = new SpeechRecognition();
     
     recognitionRef.current.lang = "zh-TW";
