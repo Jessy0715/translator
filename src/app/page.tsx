@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Mic, MicOff, Languages, Loader2 } from "lucide-react";
+import { Mic, MicOff, Languages, Loader2, Globe } from "lucide-react";
+import { locales, type LocaleKey, type Translations, defaultLocale } from "@/locales";
 
-type TargetLanguage = "en" | "lo" | "th";
+type TargetLanguage = "en" | "zh" | "th";
 
 interface TranslationResult {
   translatedText: string;
@@ -50,13 +51,22 @@ export default function Home() {
   const [isListening, setIsListening] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [error, setError] = useState("");
+  const [currentLocale, setCurrentLocale] = useState<LocaleKey>(defaultLocale);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  
+  const t: Translations = locales[currentLocale];
 
   const languageOptions = [
-    { value: "en", label: "English (英文)" },
-    { value: "lo", label: "Lao (寮語)" },
-    { value: "th", label: "Thai (泰語)" }
+    { value: "en", label: t.languages.en },
+    { value: "zh", label: t.languages.zh },
+    { value: "th", label: t.languages.th }
+  ];
+  
+  const localeOptions = [
+    { value: "zh", label: "中文" },
+    { value: "en", label: "English" },
+    { value: "th", label: "ไทย" }
   ];
 
   const startVoiceRecognition = () => {
@@ -65,9 +75,9 @@ export default function Home() {
     
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       if (isIOSSafari) {
-        setError("iOS Safari 的語音辨識功能有限制，請嘗試使用 Chrome 或其他瀏覽器");
+        setError(t.errors.iosSpeechSupport);
       } else {
-        setError("您的瀏覽器不支援語音辨識功能");
+        setError(t.errors.noSpeechSupport);
       }
       return;
     }
@@ -75,7 +85,7 @@ export default function Home() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     
     if (!SpeechRecognition) {
-      setError("您的瀏覽器不支援語音辨識功能");
+      setError(t.errors.noSpeechSupport);
       return;
     }
     
@@ -154,7 +164,7 @@ export default function Home() {
 
   const handleTranslate = async () => {
     if (!inputText.trim()) {
-      setError("請輸入要翻譯的文字");
+      setError(t.errors.noText);
       return;
     }
 
@@ -183,7 +193,7 @@ export default function Home() {
         targetLanguage,
       });
     } catch {
-      setError("翻譯過程中發生錯誤，請稍後再試");
+      setError(t.errors.translationError);
     } finally {
       setIsTranslating(false);
     }
@@ -195,11 +205,27 @@ export default function Home() {
         {/* Header */}
         <header className="text-center mb-8">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-2">
-            AI 即時翻譯
+{t.title}
           </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            支援中文轉英文、寮語、泰語的智能翻譯工具
+          <p className="text-gray-600 dark:text-gray-300 mb-4">
+            {t.subtitle}
           </p>
+          {/* Language Switcher */}
+          <div className="flex justify-center">
+            <select
+              value={currentLocale}
+              onChange={(e) => setCurrentLocale(e.target.value as LocaleKey)}
+              className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 
+                       rounded-md px-4 py-2 text-sm text-gray-700 dark:text-gray-300
+                       focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {localeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </header>
 
         {/* Main Content */}
@@ -207,13 +233,13 @@ export default function Home() {
           {/* Input Section */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
             <label htmlFor="input-text" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              輸入中文文字
+              輸入文字
             </label>
             <textarea
               id="input-text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="請輸入要翻譯的中文，或點擊麥克風按鈕開始語音輸入..."
+              placeholder="請輸入要翻譯的語言，或點擊麥克風按鈕開始語音輸入..."
               className="w-full h-32 p-3 border border-gray-300 dark:border-gray-600 rounded-md 
                        focus:ring-2 focus:ring-blue-500 focus:border-transparent
                        dark:bg-gray-700 dark:text-white resize-none"

@@ -39,7 +39,7 @@ const MYMEMORY_URL = 'https://api.mymemory.translated.net/get';
 
 const languageMap: Record<string, string> = {
   en: 'en',
-  lo: 'en',  // MyMemory 不支援寮語，暫時使用英文
+  zh: 'zh',  // 中文
   th: 'th'
 };
 
@@ -64,6 +64,16 @@ export async function POST(request: NextRequest) {
     }
 
     const targetLang = languageMap[targetLanguage];
+    
+    // 如果目標語言是中文，直接返回原文
+    if (targetLanguage === 'zh') {
+      return NextResponse.json({
+        translatedText: text,
+        sourceLanguage: 'zh',
+        targetLanguage: 'zh',
+        match: 100
+      });
+    }
     
     // MyMemory API 使用 GET 請求，參數在 URL 中
     const apiUrl = `${MYMEMORY_URL}?q=${encodeURIComponent(text)}&langpair=zh|${targetLang}`;
