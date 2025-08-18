@@ -10,6 +10,8 @@ export const en = {
   clearInput: "Clear Input",
   resultTitle: "Translation Result",
   listeningStatus: "🎤 Listening to your voice input...",
+  interfaceLanguage: "Interface Language",
+  translateTo: "Translate to",
   languages: {
     en: "English",
     zh: "Chinese",

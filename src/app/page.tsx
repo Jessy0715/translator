@@ -216,8 +216,11 @@ export default function Home() {
           <p className="text-gray-600 dark:text-gray-300 mb-4">
             {t.subtitle}
           </p>
-          {/* Language Switcher */}
-          <div className="flex justify-center">
+          {/* Interface Language Switcher */}
+          <div className="flex flex-col items-center gap-2">
+            <label className="text-sm text-gray-600 dark:text-gray-400">
+              {t.interfaceLanguage}
+            </label>
             <select
               value={currentLocale}
               onChange={(e) => setCurrentLocale(e.target.value as LocaleKey)}
@@ -267,7 +270,7 @@ export default function Home() {
                 {isListening ? t.voiceStop : t.voiceStart}
               </button>
 
-              {/* Language Selector */}
+              {/* Translation Target Language Selector */}
               <select
                 value={targetLanguage}
                 onChange={(e) => setTargetLanguage(e.target.value as TargetLanguage)}

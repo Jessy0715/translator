@@ -10,6 +10,8 @@ export const th = {
   clearInput: "ล้างข้อความ",
   resultTitle: "ผลการแปล",
   listeningStatus: "🎤 กำลังฟังการป้อนเสียงของคุณ...",
+  interfaceLanguage: "ภาษาอินเตอร์เฟซ",
+  translateTo: "แปลเป็น",
   languages: {
     en: "อังกฤษ",
     zh: "จีน",

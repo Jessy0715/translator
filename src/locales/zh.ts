@@ -10,6 +10,8 @@ export const zh = {
   clearInput: "清空輸入框",
   resultTitle: "翻譯結果",
   listeningStatus: "🎤 正在聆聽您的語音輸入...",
+  interfaceLanguage: "介面語言",
+  translateTo: "翻譯成",
   languages: {
     en: "English (英文)",
     zh: "Chinese (中文)",
