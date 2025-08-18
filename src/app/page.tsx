@@ -233,13 +233,13 @@ export default function Home() {
           {/* Input Section */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
             <label htmlFor="input-text" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              輸入文字
+{t.inputLabel}
             </label>
             <textarea
               id="input-text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder="請輸入要翻譯的語言，或點擊麥克風按鈕開始語音輸入..."
+              placeholder={t.inputPlaceholder}
               className="w-full h-32 p-3 border border-gray-300 dark:border-gray-600 rounded-md 
                        focus:ring-2 focus:ring-blue-500 focus:border-transparent
                        dark:bg-gray-700 dark:text-white resize-none"
@@ -258,7 +258,7 @@ export default function Home() {
                 disabled={isTranslating}
               >
                 {isListening ? <MicOff size={20} /> : <Mic size={20} />}
-                {isListening ? "停止錄音" : "語音輸入"}
+                {isListening ? t.voiceStop : t.voiceStart}
               </button>
 
               {/* Language Selector */}
@@ -289,7 +289,7 @@ export default function Home() {
                 ) : (
                   <Languages size={20} />
                 )}
-                {isTranslating ? "翻譯中..." : "開始翻譯"}
+                {isTranslating ? t.translating : t.translate}
               </button>
             </div>
           </div>
@@ -306,7 +306,7 @@ export default function Home() {
           {translationResult && (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">
-                翻譯結果 ({languageOptions.find(l => l.value === translationResult.targetLanguage)?.label})
+{t.resultTitle} ({languageOptions.find(l => l.value === translationResult.targetLanguage)?.label})
               </h3>
               <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-md">
                 <p className="text-gray-800 dark:text-white text-lg leading-relaxed">
@@ -320,7 +320,7 @@ export default function Home() {
           {isListening && (
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 
                           rounded-md p-4 text-blue-700 dark:text-blue-300 text-center">
-              🎤 正在聆聽您的語音輸入...
+{t.listeningStatus}
             </div>
           )}
         </main>
