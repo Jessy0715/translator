@@ -233,20 +233,9 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <header className="text-center mb-8">
-          <div className="flex justify-center items-center gap-6 mb-4">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white">
-              {t.title}
-            </h1>
-            {/* Phrasebook Link */}
-            <Link
-              href="/phrases"
-              className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-md
-                       hover:bg-purple-600 transition-colors text-sm font-medium"
-            >
-              <BookOpen size={20} />
-              {t.phrasebook}
-            </Link>
-          </div>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-2">
+            {t.title}
+          </h1>
           <p className="text-gray-600 dark:text-gray-300 mb-4">
             {t.subtitle}
           </p>
@@ -365,6 +354,16 @@ export default function Home() {
                 )}
                 {isTranslating ? t.translating : t.translate}
               </button>
+
+              {/* Phrasebook Button */}
+              <Link
+                href="/phrases"
+                className="flex items-center justify-center gap-2 px-6 py-2 bg-purple-500 text-white 
+                         rounded-md hover:bg-purple-600 transition-colors font-medium"
+              >
+                <BookOpen size={20} />
+                {t.phrasebook}
+              </Link>
             </div>
           </div>
 

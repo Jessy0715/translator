@@ -131,11 +131,12 @@ export default function Phrasebook() {
               </div>
             ) : (
               filteredCategories.map((category) => (
-                <button
+                <Link
                   key={category.id}
+                  href={`/phrases/${category.id}`}
                   className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg
                            border border-gray-200 dark:border-gray-700 p-6 transition-all
-                           hover:border-purple-300 dark:hover:border-purple-600 group"
+                           hover:border-purple-300 dark:hover:border-purple-600 group block"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -144,11 +145,6 @@ export default function Phrasebook() {
                         <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
                           {getCategoryTitle(category)}
                         </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          {currentLocale === 'zh' ? '點擊查看常用語' : 
-                           currentLocale === 'en' ? 'Tap to view phrases' : 
-                           'แตะเพื่อดูวลี'}
-                        </p>
                       </div>
                     </div>
                     <ChevronRight 
@@ -157,7 +153,7 @@ export default function Phrasebook() {
                       size={24} 
                     />
                   </div>
-                </button>
+                </Link>
               ))
             )}
           </div>

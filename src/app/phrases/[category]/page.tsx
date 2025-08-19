@@ -1,0 +1,443 @@
+"use client";
+
+import { useState } from "react";
+import { ArrowLeft, ArrowLeftRight, Volume2 } from "lucide-react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+
+// 常用語資料
+const phrasesData = {
+  airport: {
+    titleZh: "機場與交通",
+    titleEn: "Airport and Transportation",
+    titleTh: "สนามบินและการขนส่ง",
+    categories: [
+      {
+        titleZh: "詢問方向",
+        titleEn: "Asking for Directions",
+        titleTh: "การถามทิศทาง",
+        phrases: [
+          {
+            zh: "不好意思，請問服務台在哪裡？",
+            en: "Excuse me, where is the information desk?",
+            th: "ขอโทษครับ/ค่ะ เคาน์เตอร์ข้อมูลอยู่ที่ไหนครับ/คะ"
+          },
+          {
+            zh: "請問如何前往市中心？",
+            en: "How do I get to the city center?",
+            th: "ไปใจกลางเมืองยังไงครับ/คะ"
+          },
+          {
+            zh: "這輛公車是開往機場的嗎？",
+            en: "Is this the bus to the airport?",
+            th: "รถเมล์คันนี้ไปสนามบินใช่ไหมครับ/คะ"
+          }
+        ]
+      },
+      {
+        titleZh: "搭乘計程車",
+        titleEn: "Taking Taxi",
+        titleTh: "การเรียกแท็กซี่",
+        phrases: [
+          {
+            zh: "請載我到這個地址。",
+            en: "Please take me to this address.",
+            th: "กรุณาไปที่อยู่นี้ครับ/ค่ะ"
+          },
+          {
+            zh: "您能在這裡等我一下嗎？",
+            en: "Could you wait for me here?",
+            th: "รอผมหน่อยได้ไหมครับ/คะ"
+          },
+          {
+            zh: "請在這裡讓我下車。",
+            en: "Please drop me off here.",
+            th: "ให้ผมลงตรงนี้ครับ/ค่ะ"
+          }
+        ]
+      }
+    ]
+  },
+  accommodation: {
+    titleZh: "住宿",
+    titleEn: "Accommodation",
+    titleTh: "ที่พัก",
+    categories: [
+      {
+        titleZh: "入住與退房",
+        titleEn: "Check-in and Check-out",
+        titleTh: "เช็คอินและเช็คเอาท์",
+        phrases: [
+          {
+            zh: "我有一個預約，預約人姓名是[你的名字]。",
+            en: "I have a reservation under the name [Your Name].",
+            th: "ผมจองไว้ชื่อ [ชื่อของคุณ] ครับ/ค่ะ"
+          },
+          {
+            zh: "退房時間是幾點？",
+            en: "What time is check-out?",
+            th: "เช็คเอาท์กี่โมงครับ/คะ"
+          },
+          {
+            zh: "可以請您在早上七點叫我起床嗎？",
+            en: "Could I have a wake-up call at 7 a.m.?",
+            th: "ช่วยปลุกตอนเช้าตีเจ็ดได้ไหมครับ/คะ"
+          }
+        ]
+      },
+      {
+        titleZh: "請求協助",
+        titleEn: "Requesting Help",
+        titleTh: "ขอความช่วยเหลือ",
+        phrases: [
+          {
+            zh: "這把鑰匙打不開門。",
+            en: "The key doesn't work.",
+            th: "กุญแจใช้ไม่ได้ครับ/ค่ะ"
+          },
+          {
+            zh: "可以請您幫我搬行李嗎？",
+            en: "Could you please help me with my luggage?",
+            th: "ช่วยยกกระเป๋าให้หน่อยได้ไหมครับ/คะ"
+          },
+          {
+            zh: "附近有自助洗衣店嗎？",
+            en: "Is there a laundromat nearby?",
+            th: "แถวนี้มีร้านซักรีดไหมครับ/คะ"
+          }
+        ]
+      }
+    ]
+  },
+  dining: {
+    titleZh: "用餐",
+    titleEn: "Dining",
+    titleTh: "การรับประทานอาหาร",
+    categories: [
+      {
+        titleZh: "點餐",
+        titleEn: "Ordering Food",
+        titleTh: "การสั่งอาหาร",
+        phrases: [
+          {
+            zh: "請問有英文菜單嗎？",
+            en: "Do you have a menu in English?",
+            th: "มีเมนูภาษาอังกฤษไหมครับ/คะ"
+          },
+          {
+            zh: "我想點[菜名]。",
+            en: "I would like to order [Name of dish].",
+            th: "ผมอยากได้ [ชื่ออาหาร] ครับ/ค่ะ"
+          },
+          {
+            zh: "可以給我一杯水嗎？",
+            en: "Can I have a glass of water, please?",
+            th: "ขอน้ำหนึ่งแก้วได้ไหมครับ/คะ"
+          }
+        ]
+      },
+      {
+        titleZh: "用餐後",
+        titleEn: "After Dining",
+        titleTh: "หลังการรับประทานอาหาร",
+        phrases: [
+          {
+            zh: "麻煩結帳。",
+            en: "Could we have the check, please?",
+            th: "เก็บเงินครับ/ค่ะ"
+          },
+          {
+            zh: "小費有包含在帳單裡嗎？",
+            en: "Is the tip included?",
+            th: "ค่าทิปรวมในบิลแล้วไหมครับ/คะ"
+          },
+          {
+            zh: "這個很好吃！",
+            en: "This is delicious!",
+            th: "อร่อยมากเลยครับ/ค่ะ"
+          }
+        ]
+      }
+    ]
+  },
+  shopping: {
+    titleZh: "購物",
+    titleEn: "Shopping",
+    titleTh: "ช้อปปิ้ง",
+    categories: [
+      {
+        titleZh: "詢問價格",
+        titleEn: "Asking About Price",
+        titleTh: "ถามราคา",
+        phrases: [
+          {
+            zh: "這個多少錢？",
+            en: "How much is this?",
+            th: "อันนี้เท่าไหร่ครับ/คะ"
+          },
+          {
+            zh: "你們接受信用卡嗎？",
+            en: "Do you accept credit cards?",
+            th: "รับบัตรเครดิตไหมครับ/คะ"
+          },
+          {
+            zh: "這個有打折嗎？",
+            en: "Is there a discount on this?",
+            th: "อันนี้มีส่วนลดไหมครับ/คะ"
+          }
+        ]
+      },
+      {
+        titleZh: "其他",
+        titleEn: "Others",
+        titleTh: "อื่นๆ",
+        phrases: [
+          {
+            zh: "我能試穿這個嗎？",
+            en: "Could I try this on?",
+            th: "ลองใส่ได้ไหมครับ/คะ"
+          },
+          {
+            zh: "我只是看看，謝謝。",
+            en: "I'm just looking, thank you.",
+            th: "แค่ดูครับ/ค่ะ ขอบคุณครับ/ค่ะ"
+          },
+          {
+            zh: "可以幫我包裝起來嗎？",
+            en: "Could you wrap this up for me?",
+            th: "ช่วยห่อให้หน่อยได้ไหมครับ/คะ"
+          }
+        ]
+      }
+    ]
+  },
+  emergency: {
+    titleZh: "緊急狀況與一般實用片語",
+    titleEn: "Emergencies and General Phrases",
+    titleTh: "เหตุฉุกเฉินและวลีที่ใช้ทั่วไป",
+    categories: [
+      {
+        titleZh: "尋求協助",
+        titleEn: "Seeking Help",
+        titleTh: "ขอความช่วยเหลือ",
+        phrases: [
+          {
+            zh: "救命！",
+            en: "Help!",
+            th: "ช่วยด้วย!"
+          },
+          {
+            zh: "我需要看醫生。",
+            en: "I need a doctor.",
+            th: "ผมต้องการหาหมอครับ/ค่ะ"
+          },
+          {
+            zh: "我迷路了。",
+            en: "I am lost.",
+            th: "ผมหลงทางครับ/ค่ะ"
+          }
+        ]
+      },
+      {
+        titleZh: "日常問候",
+        titleEn: "Daily Greetings",
+        titleTh: "การทักทาย",
+        phrases: [
+          {
+            zh: "你好。",
+            en: "Hello / Hi.",
+            th: "สวัสดีครับ/ค่ะ"
+          },
+          {
+            zh: "謝謝。",
+            en: "Thank you.",
+            th: "ขอบคุณครับ/ค่ะ"
+          },
+          {
+            zh: "不好意思。",
+            en: "Excuse me.",
+            th: "ขอโทษครับ/ค่ะ"
+          },
+          {
+            zh: "對不起。",
+            en: "I'm sorry.",
+            th: "ขอโทษครับ/ค่ะ"
+          },
+          {
+            zh: "洗手間在哪裡？",
+            en: "Where is the restroom?",
+            th: "ห้องน้ำอยู่ที่ไหนครับ/คะ"
+          }
+        ]
+      }
+    ]
+  }
+};
+
+type LanguageCode = 'zh' | 'en' | 'th';
+
+export default function CategoryPage() {
+  const params = useParams();
+  const categoryId = params.category as string;
+  const [sourceLanguage, setSourceLanguage] = useState<LanguageCode>('zh');
+  const [targetLanguage, setTargetLanguage] = useState<LanguageCode>('en');
+  
+  const categoryData = phrasesData[categoryId as keyof typeof phrasesData];
+
+  if (!categoryData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
+            分類不存在
+          </h1>
+          <Link href="/phrases" className="text-purple-600 hover:underline">
+            返回常用語手冊
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const languageOptions = [
+    { value: 'zh', label: '中文' },
+    { value: 'en', label: 'English' },
+    { value: 'th', label: 'ไทย' }
+  ];
+
+  const speakText = (text: string, language: LanguageCode) => {
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+      // 設定語言
+      switch (language) {
+        case 'en':
+          utterance.lang = 'en-US';
+          break;
+        case 'th':
+          utterance.lang = 'th-TH';
+          break;
+        case 'zh':
+        default:
+          utterance.lang = 'zh-TW';
+          break;
+      }
+      
+      utterance.rate = 0.8;
+      speechSynthesis.speak(utterance);
+    }
+  };
+
+  const getCategoryTitle = () => {
+    switch (sourceLanguage) {
+      case 'en':
+        return categoryData.titleEn;
+      case 'th':
+        return categoryData.titleTh;
+      default:
+        return categoryData.titleZh;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
+      <div className="container mx-auto px-4 py-6 max-w-4xl">
+        {/* Header with Back Button */}
+        <header className="mb-8">
+          <div className="flex items-center gap-4 mb-6">
+            <Link
+              href="/phrases"
+              className="flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-300 
+                       hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+            >
+              <ArrowLeft size={20} />
+              <span className="text-sm">返回</span>
+            </Link>
+          </div>
+
+          <div className="text-center mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white mb-2">
+              {getCategoryTitle()}
+            </h1>
+          </div>
+
+          {/* Language Switcher */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-6">
+            <div className="flex items-center justify-center gap-4">
+              <select
+                value={sourceLanguage}
+                onChange={(e) => setSourceLanguage(e.target.value as LanguageCode)}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+                         bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                         focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                {languageOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              
+              <ArrowLeftRight className="text-purple-600 dark:text-purple-400" size={24} />
+              
+              <select
+                value={targetLanguage}
+                onChange={(e) => setTargetLanguage(e.target.value as LanguageCode)}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+                         bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                         focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                {languageOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </header>
+
+        {/* Phrases List */}
+        <main className="space-y-8">
+          {categoryData.categories.map((subcategory, index) => (
+            <div key={index} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
+                {sourceLanguage === 'en' ? subcategory.titleEn : 
+                 sourceLanguage === 'th' ? subcategory.titleTh : 
+                 subcategory.titleZh}
+              </h2>
+              
+              <div className="space-y-4">
+                {subcategory.phrases.map((phrase, phraseIndex) => (
+                  <div key={phraseIndex} className="border-l-4 border-purple-400 pl-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-r-md">
+                    <div className="mb-2">
+                      <p className="text-gray-800 dark:text-white font-medium">
+                        {phrase[sourceLanguage]}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <p className="text-gray-600 dark:text-gray-300 flex-1">
+                        {phrase[targetLanguage]}
+                      </p>
+                      
+                      <button
+                        onClick={() => speakText(phrase[targetLanguage], targetLanguage)}
+                        className="p-2 text-purple-600 hover:text-purple-700 dark:text-purple-400 
+                                 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 
+                                 rounded-full transition-colors"
+                        title="播放發音"
+                      >
+                        <Volume2 size={20} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </main>
+      </div>
+    </div>
+  );
+}
