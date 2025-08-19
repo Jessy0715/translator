@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Mic, MicOff, Languages, Loader2, Globe, X } from "lucide-react";
+import { Mic, MicOff, Languages, Loader2, Globe, X, Undo2 } from "lucide-react";
 import { locales, type LocaleKey, type Translations, defaultLocale } from "@/locales";
 
 type TargetLanguage = "en" | "zh" | "th";
@@ -52,6 +52,8 @@ export default function Home() {
   const [isTranslating, setIsTranslating] = useState(false);
   const [error, setError] = useState("");
   const [currentLocale, setCurrentLocale] = useState<LocaleKey>(defaultLocale);
+  const [lastClearedText, setLastClearedText] = useState("");
+  const [showUndoButton, setShowUndoButton] = useState(false);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   
@@ -163,9 +165,29 @@ export default function Home() {
   };
 
   const clearInput = () => {
+    // 只有在有文字時才保存並顯示復原按鈕
+    if (inputText.trim()) {
+      setLastClearedText(inputText);
+      setShowUndoButton(true);
+    }
     setInputText("");
     setTranslationResult(null);
     setError("");
+  };
+
+  const undoClear = () => {
+    setInputText(lastClearedText);
+    setShowUndoButton(false);
+    setLastClearedText("");
+  };
+
+  // 監聽手動輸入變化，隱藏復原按鈕
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInputText(e.target.value);
+    // 如果使用者手動修改文字，隱藏復原按鈕
+    if (showUndoButton) {
+      setShowUndoButton(false);
+    }
   };
 
   const handleTranslate = async () => {
@@ -244,32 +266,63 @@ export default function Home() {
             <label htmlFor="input-text" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
 {t.inputLabel}
             </label>
-            <textarea
-              id="input-text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder={t.inputPlaceholder}
-              className="w-full h-32 p-3 border border-gray-300 dark:border-gray-600 rounded-md 
-                       focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                       dark:bg-gray-700 dark:text-white resize-none"
-            />
+            <div className="relative">
+              <textarea
+                id="input-text"
+                value={inputText}
+                onChange={handleInputChange}
+                placeholder={t.inputPlaceholder}
+                className="w-full h-32 p-3 pr-24 border border-gray-300 dark:border-gray-600 rounded-md 
+                         focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                         dark:bg-gray-700 dark:text-white resize-none"
+              />
+              
+              {/* Icons in textarea */}
+              <div className="absolute top-3 right-3 flex gap-1">
+                {/* Undo button - only show after clearing with X button */}
+                {showUndoButton && (
+                  <button
+                    onClick={undoClear}
+                    className="p-1 text-orange-500 hover:text-orange-600 dark:hover:text-orange-400 
+                             rounded transition-colors"
+                    disabled={isTranslating}
+                    title="復原清空"
+                  >
+                    <Undo2 size={20} />
+                  </button>
+                )}
+                
+                {/* Clear button - only show when there's text and no undo button */}
+                {inputText.trim() && !showUndoButton && (
+                  <button
+                    onClick={clearInput}
+                    className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 
+                             rounded transition-colors"
+                    disabled={isTranslating}
+                    title="清空輸入"
+                  >
+                    <X size={20} />
+                  </button>
+                )}
+                
+                {/* Voice button */}
+                <button
+                  onClick={isListening ? stopVoiceRecognition : startVoiceRecognition}
+                  className={`p-1 rounded transition-colors
+                    ${isListening 
+                      ? "text-red-500 hover:text-red-600" 
+                      : "text-blue-500 hover:text-blue-600"
+                    }`}
+                  disabled={isTranslating}
+                  title={isListening ? "停止語音輸入" : "開始語音輸入"}
+                >
+                  {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+                </button>
+              </div>
+            </div>
             
             {/* Control Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 mt-4">
-              {/* Voice Input Button */}
-              <button
-                onClick={isListening ? stopVoiceRecognition : startVoiceRecognition}
-                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-md transition-colors
-                  ${isListening 
-                    ? "bg-red-500 hover:bg-red-600 text-white" 
-                    : "bg-blue-500 hover:bg-blue-600 text-white"
-                  }`}
-                disabled={isTranslating}
-              >
-                {isListening ? <MicOff size={20} /> : <Mic size={20} />}
-                {isListening ? t.voiceStop : t.voiceStart}
-              </button>
-
               {/* Translation Target Language Selector */}
               <select
                 value={targetLanguage}
@@ -299,18 +352,6 @@ export default function Home() {
                   <Languages size={20} />
                 )}
                 {isTranslating ? t.translating : t.translate}
-              </button>
-
-              {/* Clear Button */}
-              <button
-                onClick={clearInput}
-                disabled={isTranslating || !inputText.trim()}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-500 text-white 
-                         rounded-md hover:bg-gray-600 disabled:bg-gray-300 disabled:cursor-not-allowed
-                         transition-colors"
-              >
-                <X size={20} />
-                {t.clearInput}
               </button>
             </div>
           </div>
