@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowLeft, ArrowLeftRight, Volume2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, ArrowLeftRight, Volume2, Copy, Check } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
@@ -281,8 +281,14 @@ export default function CategoryPage() {
   const categoryId = params.category as string;
   const [sourceLanguage, setSourceLanguage] = useState<LanguageCode>('zh');
   const [targetLanguage, setTargetLanguage] = useState<LanguageCode>('en');
+  const [copiedItem, setCopiedItem] = useState<string>('');
+  const [isClient, setIsClient] = useState(false);
   
   const categoryData = phrasesData[categoryId as keyof typeof phrasesData];
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   if (!categoryData) {
     return (
@@ -291,7 +297,7 @@ export default function CategoryPage() {
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
             分類不存在
           </h1>
-          <Link href="/phrases" className="text-purple-600 hover:underline">
+          <Link href="/phrases" className="text-teal-600 hover:underline">
             返回常用語手冊
           </Link>
         </div>
@@ -305,27 +311,170 @@ export default function CategoryPage() {
     { value: 'th', label: 'ไทย' }
   ];
 
+  // 交換來源語言與目標語言
+  const swapLanguages = () => {
+    const temp = sourceLanguage;
+    setSourceLanguage(targetLanguage);
+    setTargetLanguage(temp);
+  };
+
+  // 複製到剪貼板
+  const copyToClipboard = async (text: string, itemId: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedItem(itemId);
+      setTimeout(() => setCopiedItem(''), 2000); // 2秒後清除複製狀態
+    } catch (error) {
+      // 如果 clipboard API 不可用，使用舊方法
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        setCopiedItem(itemId);
+        setTimeout(() => setCopiedItem(''), 2000);
+      } catch (fallbackError) {
+        console.error('複製失敗:', fallbackError);
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+
   const speakText = (text: string, language: LanguageCode) => {
-    if ('speechSynthesis' in window) {
+    // 確保只在客戶端執行
+    if (!isClient || typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      return;
+    }
+
+    // 清除之前的語音
+    speechSynthesis.cancel();
+    
+    // 短暫延遲確保取消操作完成
+    setTimeout(() => {
       const utterance = new SpeechSynthesisUtterance(text);
       
-      // 設定語言
+      // 設定基本語言屬性
+      let langCode = '';
       switch (language) {
         case 'en':
-          utterance.lang = 'en-US';
+          langCode = 'en-US';
           break;
         case 'th':
-          utterance.lang = 'th-TH';
+          langCode = 'th-TH';
           break;
         case 'zh':
         default:
-          utterance.lang = 'zh-TW';
+          langCode = 'zh-TW';
           break;
       }
       
+      utterance.lang = langCode;
       utterance.rate = 0.8;
-      speechSynthesis.speak(utterance);
-    }
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+      
+      // 尋找合適的語音
+      const findVoice = () => {
+        const voices = speechSynthesis.getVoices();
+        
+        // 除錯：列出所有可用語音（僅在開發環境顯示）
+        if (process.env.NODE_ENV === 'development') {
+          console.log('所有可用語音:');
+          voices.forEach((voice, index) => {
+            console.log(`${index}: ${voice.name} (${voice.lang}) - ${voice.localService ? 'Local' : 'Remote'}`);
+          });
+        }
+        
+        let selectedVoice = null;
+        
+        // 對於泰語，使用多重搜尋策略
+        if (language === 'th') {
+          console.log('嘗試搜尋泰語語音...');
+          
+          // 策略1: 精確匹配 th-TH, th-th, th
+          selectedVoice = voices.find(voice => 
+            voice.lang === 'th-TH' || 
+            voice.lang === 'th-th' || 
+            voice.lang === 'th'
+          );
+          if (selectedVoice) {
+            console.log(`策略1成功: ${selectedVoice.name} (${selectedVoice.lang})`);
+          }
+          
+          // 策略2: 語言代碼開頭匹配
+          if (!selectedVoice) {
+            selectedVoice = voices.find(voice => voice.lang.toLowerCase().startsWith('th'));
+            if (selectedVoice) {
+              console.log(`策略2成功: ${selectedVoice.name} (${selectedVoice.lang})`);
+            }
+          }
+          
+          // 策略3: 語音名稱包含關鍵字
+          if (!selectedVoice) {
+            selectedVoice = voices.find(voice => 
+              voice.name.toLowerCase().includes('thai') ||
+              voice.name.toLowerCase().includes('ไทย') ||
+              voice.lang.toLowerCase().includes('thai')
+            );
+            if (selectedVoice) {
+              console.log(`策略3成功: ${selectedVoice.name} (${selectedVoice.lang})`);
+            }
+          }
+          
+          // 策略4: Google 語音 (通常命名為 "Google xxxx")
+          if (!selectedVoice) {
+            selectedVoice = voices.find(voice => 
+              voice.name.toLowerCase().includes('google') && 
+              (voice.lang.toLowerCase().includes('th') || voice.name.toLowerCase().includes('thai'))
+            );
+            if (selectedVoice) {
+              console.log(`策略4成功: ${selectedVoice.name} (${selectedVoice.lang})`);
+            }
+          }
+        } else {
+          // 其他語言的通用搜尋
+          const langPrefix = langCode.split('-')[0];
+          selectedVoice = voices.find(voice => voice.lang.toLowerCase().startsWith(langPrefix));
+        }
+        
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+          console.log(`✅ 使用語音: ${selectedVoice.name} (${selectedVoice.lang}) 播放文字: "${text}"`);
+          return true;
+        } else {
+          if (language === 'th') {
+            console.warn(`❌ 系統未安裝泰語語音包`);
+            console.log(`建議解決方案：`);
+            console.log(`1. Windows: 前往設定 → 時間與語言 → 語音 → 新增語音`);
+            console.log(`2. 或使用線上翻譯工具如 Google 翻譯進行泰語發音`);
+            
+            // 顯示用戶友好的警告（可選）
+            if (typeof window !== 'undefined') {
+              // 你可以在這裡添加 UI 提示，但暫時只用 console
+            }
+          } else {
+            console.warn(`❌ 找不到 ${language} (${langCode}) 語音，將使用系統預設語音`);
+          }
+          console.log(`總共有 ${voices.length} 個可用語音`);
+          return false;
+        }
+      };
+      
+      // 如果語音列表未準備好，等待載入
+      if (speechSynthesis.getVoices().length === 0) {
+        const handleVoicesChanged = () => {
+          findVoice();
+          speechSynthesis.speak(utterance);
+          speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
+        };
+        speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
+      } else {
+        findVoice();
+        speechSynthesis.speak(utterance);
+      }
+    }, 100);
   };
 
   const getCategoryTitle = () => {
@@ -340,7 +489,7 @@ export default function CategoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-slate-800">
       <div className="container mx-auto px-4 py-6 max-w-4xl">
         {/* Header with Back Button */}
         <header className="mb-8">
@@ -348,7 +497,7 @@ export default function CategoryPage() {
             <Link
               href="/phrases"
               className="flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-300 
-                       hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                       hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
             >
               <ArrowLeft size={20} />
               <span className="text-sm">返回</span>
@@ -369,7 +518,7 @@ export default function CategoryPage() {
                 onChange={(e) => setSourceLanguage(e.target.value as LanguageCode)}
                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md
                          bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                         focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                         focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               >
                 {languageOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -378,14 +527,21 @@ export default function CategoryPage() {
                 ))}
               </select>
               
-              <ArrowLeftRight className="text-purple-600 dark:text-purple-400" size={24} />
+              <button
+                onClick={swapLanguages}
+                className="p-2 text-teal-600 dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/20 
+                         rounded-full transition-colors"
+                title="交換語言"
+              >
+                <ArrowLeftRight size={24} />
+              </button>
               
               <select
                 value={targetLanguage}
                 onChange={(e) => setTargetLanguage(e.target.value as LanguageCode)}
                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md
                          bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                         focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                         focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               >
                 {languageOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -409,7 +565,7 @@ export default function CategoryPage() {
               
               <div className="space-y-4">
                 {subcategory.phrases.map((phrase, phraseIndex) => (
-                  <div key={phraseIndex} className="border-l-4 border-purple-400 pl-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-r-md">
+                  <div key={phraseIndex} className="border-l-4 border-teal-400 pl-4 py-3 bg-gray-50 dark:bg-gray-700 rounded-r-md">
                     <div className="mb-2">
                       <p className="text-gray-800 dark:text-white font-medium">
                         {phrase[sourceLanguage]}
@@ -421,15 +577,27 @@ export default function CategoryPage() {
                         {phrase[targetLanguage]}
                       </p>
                       
-                      <button
-                        onClick={() => speakText(phrase[targetLanguage], targetLanguage)}
-                        className="p-2 text-purple-600 hover:text-purple-700 dark:text-purple-400 
-                                 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 
-                                 rounded-full transition-colors"
-                        title="播放發音"
-                      >
-                        <Volume2 size={20} />
-                      </button>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => copyToClipboard(phrase[targetLanguage], `${index}-${phraseIndex}-target`)}
+                          className="p-2 text-slate-500 hover:text-slate-600 dark:text-slate-400 
+                                   dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/20 
+                                   rounded-full transition-colors"
+                          title="複製譯文"
+                        >
+                          {copiedItem === `${index}-${phraseIndex}-target` ? <Check size={18} /> : <Copy size={18} />}
+                        </button>
+                        
+                        <button
+                          onClick={() => speakText(phrase[targetLanguage], targetLanguage)}
+                          className="p-2 text-teal-600 hover:text-teal-700 dark:text-teal-400 
+                                   dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20 
+                                   rounded-full transition-colors"
+                          title="播放發音"
+                        >
+                          <Volume2 size={20} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Mic, MicOff, Languages, Loader2, Globe, X, Undo2, BookOpen } from "lucide-react";
+import { Mic, MicOff, Languages, Loader2, Globe, X, Undo2, BookOpen, Copy, Check } from "lucide-react";
 import Link from "next/link";
 import { locales, type LocaleKey, type Translations, defaultLocale } from "@/locales";
 
@@ -55,6 +55,7 @@ export default function Home() {
   const [currentLocale, setCurrentLocale] = useState<LocaleKey>(defaultLocale);
   const [lastClearedText, setLastClearedText] = useState("");
   const [showUndoButton, setShowUndoButton] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   
@@ -191,6 +192,30 @@ export default function Home() {
     }
   };
 
+  // 複製到剪貼板
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000); // 2秒後隱藏複製成功狀態
+    } catch (error) {
+      // 如果 clipboard API 不可用，使用舊方法
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      } catch (fallbackError) {
+        console.error('複製失敗:', fallbackError);
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+
   const handleTranslate = async () => {
     if (!inputText.trim()) {
       setError(t.errors.noText);
@@ -229,7 +254,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-slate-800">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <header className="text-center mb-8">
@@ -249,7 +274,7 @@ export default function Home() {
               onChange={(e) => setCurrentLocale(e.target.value as LocaleKey)}
               className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 
                        rounded-md px-4 py-2 text-sm text-gray-700 dark:text-gray-300
-                       focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       focus:outline-none focus:ring-2 focus:ring-teal-500"
             >
               {localeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -274,7 +299,7 @@ export default function Home() {
                 onChange={handleInputChange}
                 placeholder={t.inputPlaceholder}
                 className="w-full h-32 p-3 pr-24 border border-gray-300 dark:border-gray-600 rounded-md 
-                         focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                         focus:ring-2 focus:ring-teal-500 focus:border-transparent
                          dark:bg-gray-700 dark:text-white resize-none"
               />
               
@@ -284,7 +309,7 @@ export default function Home() {
                 {showUndoButton && (
                   <button
                     onClick={undoClear}
-                    className="p-1 text-orange-500 hover:text-orange-600 dark:hover:text-orange-400 
+                    className="p-1 text-amber-600 hover:text-amber-700 dark:hover:text-amber-400 
                              rounded transition-colors"
                     disabled={isTranslating}
                     title="復原清空"
@@ -312,7 +337,7 @@ export default function Home() {
                   className={`p-1 rounded transition-colors
                     ${isListening 
                       ? "text-red-500 hover:text-red-600" 
-                      : "text-blue-500 hover:text-blue-600"
+                      : "text-teal-600 hover:text-teal-700"
                     }`}
                   disabled={isTranslating}
                   title={isListening ? "停止語音輸入" : "開始語音輸入"}
@@ -329,7 +354,7 @@ export default function Home() {
                 value={targetLanguage}
                 onChange={(e) => setTargetLanguage(e.target.value as TargetLanguage)}
                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md
-                         dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
+                         dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-teal-500"
                 disabled={isTranslating}
               >
                 {languageOptions.map((option) => (
@@ -343,8 +368,8 @@ export default function Home() {
               <button
                 onClick={handleTranslate}
                 disabled={isTranslating || !inputText.trim()}
-                className="flex items-center justify-center gap-2 px-6 py-2 bg-green-500 text-white 
-                         rounded-md hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed
+                className="flex items-center justify-center gap-2 px-6 py-2 bg-teal-600 text-white 
+                         rounded-md hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed
                          transition-colors"
               >
                 {isTranslating ? (
@@ -358,8 +383,8 @@ export default function Home() {
               {/* Phrasebook Button */}
               <Link
                 href="/phrases"
-                className="flex items-center justify-center gap-2 px-6 py-2 bg-purple-500 text-white 
-                         rounded-md hover:bg-purple-600 transition-colors font-medium"
+                className="flex items-center justify-center gap-2 px-6 py-2 bg-slate-600 text-white 
+                         rounded-md hover:bg-slate-700 transition-colors font-medium"
               >
                 <BookOpen size={20} />
                 {t.phrasebook}
@@ -382,17 +407,33 @@ export default function Home() {
 {t.resultTitle} ({languageOptions.find(l => l.value === translationResult.targetLanguage)?.label})
               </h3>
               <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-md">
-                <p className="text-gray-800 dark:text-white text-lg leading-relaxed">
-                  {translationResult.translatedText}
-                </p>
+                <div className="flex items-start gap-3">
+                  <p className="text-gray-800 dark:text-white text-lg leading-relaxed flex-1">
+                    {translationResult.translatedText}
+                  </p>
+                  <button
+                    onClick={() => copyToClipboard(translationResult.translatedText)}
+                    className="p-2 text-teal-600 hover:text-teal-700 dark:text-teal-400 
+                             dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20 
+                             rounded-full transition-colors flex-shrink-0"
+                    title="複製翻譯結果"
+                  >
+                    {isCopied ? <Check size={20} /> : <Copy size={20} />}
+                  </button>
+                </div>
+                {isCopied && (
+                  <div className="mt-2 text-sm text-teal-600 dark:text-teal-400">
+                    ✓ 已複製到剪貼板
+                  </div>
+                )}
               </div>
             </div>
           )}
 
           {/* Status Indicator */}
           {isListening && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 
-                          rounded-md p-4 text-blue-700 dark:text-blue-300 text-center">
+            <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 
+                          rounded-md p-4 text-teal-700 dark:text-teal-300 text-center">
 {t.listeningStatus}
             </div>
           )}
