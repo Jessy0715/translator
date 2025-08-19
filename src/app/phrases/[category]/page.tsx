@@ -348,25 +348,31 @@ export default function CategoryPage() {
       return;
     }
 
+    // 偵測移動設備
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+
     // 清除之前的語音
     speechSynthesis.cancel();
     
-    // 短暫延遲確保取消操作完成
+    // 移動設備需要更長的延遲
+    const delay = isMobile ? 200 : 100;
     setTimeout(() => {
       const utterance = new SpeechSynthesisUtterance(text);
       
-      // 設定基本語言屬性
+      // 設定基本語言屬性（針對移動設備優化）
       let langCode = '';
       switch (language) {
         case 'en':
-          langCode = 'en-US';
+          langCode = isMobile ? 'en' : 'en-US';
           break;
         case 'th':
-          langCode = 'th-TH';
+          // 移動設備通常支援簡化的語言代碼
+          langCode = isMobile ? 'th' : 'th-TH';
           break;
         case 'zh':
         default:
-          langCode = 'zh-TW';
+          langCode = isMobile ? 'zh' : 'zh-TW';
           break;
       }
       
@@ -445,19 +451,24 @@ export default function CategoryPage() {
           return true;
         } else {
           if (language === 'th') {
-            console.warn(`❌ 系統未安裝泰語語音包`);
-            console.log(`建議解決方案：`);
-            console.log(`1. Windows: 前往設定 → 時間與語言 → 語音 → 新增語音`);
-            console.log(`2. 或使用線上翻譯工具如 Google 翻譯進行泰語發音`);
-            
-            // 顯示用戶友好的警告（可選）
-            if (typeof window !== 'undefined') {
-              // 你可以在這裡添加 UI 提示，但暫時只用 console
+            if (isMobile) {
+              console.warn(`❌ 手機未找到泰語語音`);
+              console.log(`建議解決方案：`);
+              if (isIOS) {
+                console.log(`iOS: 設定 → 一般 → 輔助使用 → 語音朗讀 → 聲音 → 新增泰語`);
+              } else {
+                console.log(`Android: 設定 → 語言與輸入法 → 文字轉語音輸出 → 新增泰語語音`);
+              }
+            } else {
+              console.warn(`❌ 系統未安裝泰語語音包`);
+              console.log(`建議解決方案：`);
+              console.log(`1. Windows: 前往設定 → 時間與語言 → 語音 → 新增語音`);
+              console.log(`2. 或使用線上翻譯工具如 Google 翻譯進行泰語發音`);
             }
           } else {
             console.warn(`❌ 找不到 ${language} (${langCode}) 語音，將使用系統預設語音`);
           }
-          console.log(`總共有 ${voices.length} 個可用語音`);
+          console.log(`總共有 ${voices.length} 個可用語音，設備類型: ${isMobile ? '手機' : '電腦'}`);
           return false;
         }
       };
@@ -474,7 +485,7 @@ export default function CategoryPage() {
         findVoice();
         speechSynthesis.speak(utterance);
       }
-    }, 100);
+    }, delay);
   };
 
   const getCategoryTitle = () => {
