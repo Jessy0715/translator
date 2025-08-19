@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Mic, MicOff, Languages, Loader2, Globe, X, Undo2 } from "lucide-react";
+import { Mic, MicOff, Languages, Loader2, Globe, X, Undo2, BookOpen } from "lucide-react";
+import Link from "next/link";
 import { locales, type LocaleKey, type Translations, defaultLocale } from "@/locales";
 
 type TargetLanguage = "en" | "zh" | "th";
@@ -232,9 +233,20 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <header className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-2">
-{t.title}
-          </h1>
+          <div className="flex justify-center items-center gap-6 mb-4">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white">
+              {t.title}
+            </h1>
+            {/* Phrasebook Link */}
+            <Link
+              href="/phrases"
+              className="flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-md
+                       hover:bg-purple-600 transition-colors text-sm font-medium"
+            >
+              <BookOpen size={20} />
+              {t.phrasebook}
+            </Link>
+          </div>
           <p className="text-gray-600 dark:text-gray-300 mb-4">
             {t.subtitle}
           </p>

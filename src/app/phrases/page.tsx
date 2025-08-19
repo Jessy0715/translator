@@ -1,0 +1,183 @@
+"use client";
+
+import { useState } from "react";
+import { Search, ArrowLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
+import { locales, type LocaleKey, defaultLocale } from "@/locales";
+
+// 分類資料
+const categories = [
+  {
+    id: "airport",
+    icon: "✈️",
+    titleZh: "機場與交通",
+    titleEn: "Airport and Transportation",
+    titleTh: "สนามบินและการขนส่ง"
+  },
+  {
+    id: "accommodation",
+    icon: "🏨",
+    titleZh: "住宿",
+    titleEn: "Accommodation", 
+    titleTh: "ที่พัก"
+  },
+  {
+    id: "dining",
+    icon: "🍽️",
+    titleZh: "用餐",
+    titleEn: "Dining",
+    titleTh: "การรับประทานอาหาร"
+  },
+  {
+    id: "shopping",
+    icon: "🛍️",
+    titleZh: "購物",
+    titleEn: "Shopping",
+    titleTh: "ช้อปปิ้ง"
+  },
+  {
+    id: "emergency",
+    icon: "🚨",
+    titleZh: "緊急狀況與一般實用片語",
+    titleEn: "Emergencies and General Phrases",
+    titleTh: "เหตุฉุกเฉินและวลีที่ใช้ทั่วไป"
+  }
+];
+
+export default function Phrasebook() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentLocale, setCurrentLocale] = useState<LocaleKey>(defaultLocale);
+  
+  const t = locales[currentLocale];
+
+  // 根據搜尋詞過濾分類
+  const filteredCategories = categories.filter(category => {
+    const title = category[`title${currentLocale.charAt(0).toUpperCase() + currentLocale.slice(1)}` as keyof typeof category] as string;
+    return title.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
+  const getCategoryTitle = (category: typeof categories[0]) => {
+    switch (currentLocale) {
+      case 'en':
+        return category.titleEn;
+      case 'th':
+        return category.titleTh;
+      default:
+        return category.titleZh;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-purple-900">
+      <div className="container mx-auto px-4 py-6 max-w-4xl">
+        {/* Header with Back Button */}
+        <header className="mb-8">
+          <div className="flex items-center gap-4 mb-6">
+            <Link
+              href="/"
+              className="flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-300 
+                       hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+            >
+              <ArrowLeft size={20} />
+              <span className="text-sm">{currentLocale === 'zh' ? '返回' : currentLocale === 'en' ? 'Back' : 'กลับ'}</span>
+            </Link>
+          </div>
+
+          <div className="text-center">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-2">
+              {t.phrasebook}
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300">
+              {currentLocale === 'zh' ? '出國旅遊常用語速查手冊' : 
+               currentLocale === 'en' ? 'Quick reference guide for travel phrases' : 
+               'คู่มืออ้างอิงด่วนสำหรับวลีการเดินทาง'}
+            </p>
+          </div>
+        </header>
+
+        {/* Search Bar */}
+        <div className="mb-8">
+          <div className="relative max-w-md mx-auto">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              placeholder={currentLocale === 'zh' ? '搜尋分類...' : 
+                          currentLocale === 'en' ? 'Search categories...' : 
+                          'ค้นหาหมวดหมู่...'}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg
+                       bg-white dark:bg-gray-800 text-gray-900 dark:text-white
+                       focus:ring-2 focus:ring-purple-500 focus:border-transparent
+                       placeholder-gray-500 dark:placeholder-gray-400"
+            />
+          </div>
+        </div>
+
+        {/* Categories List */}
+        <main className="space-y-4">
+          <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 text-center">
+            {currentLocale === 'zh' ? '情境分類' : 
+             currentLocale === 'en' ? 'Categories' : 
+             'หมวดหมู่สถานการณ์'}
+          </h2>
+
+          <div className="grid gap-4">
+            {filteredCategories.length === 0 ? (
+              <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                {currentLocale === 'zh' ? '找不到相關分類' : 
+                 currentLocale === 'en' ? 'No categories found' : 
+                 'ไม่พบหมวดหมู่'}
+              </div>
+            ) : (
+              filteredCategories.map((category) => (
+                <button
+                  key={category.id}
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg
+                           border border-gray-200 dark:border-gray-700 p-6 transition-all
+                           hover:border-purple-300 dark:hover:border-purple-600 group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="text-3xl">{category.icon}</div>
+                      <div className="text-left">
+                        <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
+                          {getCategoryTitle(category)}
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          {currentLocale === 'zh' ? '點擊查看常用語' : 
+                           currentLocale === 'en' ? 'Tap to view phrases' : 
+                           'แตะเพื่อดูวลี'}
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight 
+                      className="text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-400 
+                               transition-colors" 
+                      size={24} 
+                    />
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        </main>
+
+        {/* Language Switcher */}
+        <div className="fixed bottom-6 right-6">
+          <select
+            value={currentLocale}
+            onChange={(e) => setCurrentLocale(e.target.value as LocaleKey)}
+            className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 
+                     rounded-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300
+                     shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+            <option value="th">ไทย</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+}

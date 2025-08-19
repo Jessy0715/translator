@@ -12,6 +12,7 @@ export const en = {
   listeningStatus: "🎤 Listening to your voice input...",
   interfaceLanguage: "Interface Language",
   translateTo: "Translate to",
+  phrasebook: "Phrasebook",
   languages: {
     en: "English",
     zh: "Chinese",

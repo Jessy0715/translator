@@ -12,6 +12,7 @@ export const th = {
   listeningStatus: "🎤 กำลังฟังการป้อนเสียงของคุณ...",
   interfaceLanguage: "ภาษาอินเตอร์เฟซ",
   translateTo: "แปลเป็น",
+  phrasebook: "คู่มือวลีที่ใช้บ่อย",
   languages: {
     en: "อังกฤษ",
     zh: "จีน",
