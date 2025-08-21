@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { Mic, MicOff, Languages, Loader2, Globe, X, Undo2, BookOpen, Copy, Check } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Mic, MicOff, Languages, Loader2, Globe, X, Undo2, BookOpen, Copy, Check, Volume2 } from "lucide-react";
 import Link from "next/link";
 import { locales, type LocaleKey, type Translations, defaultLocale } from "@/locales";
 
@@ -48,7 +48,7 @@ declare global {
 export default function Home() {
   const [inputText, setInputText] = useState("");
   const [translationResult, setTranslationResult] = useState<TranslationResult | null>(null);
-  const [targetLanguage, setTargetLanguage] = useState<TargetLanguage>("en");
+  const [targetLanguage, setTargetLanguage] = useState<TargetLanguage>("th");
   const [isListening, setIsListening] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [error, setError] = useState("");
@@ -56,8 +56,13 @@ export default function Home() {
   const [lastClearedText, setLastClearedText] = useState("");
   const [showUndoButton, setShowUndoButton] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   
   const t: Translations = locales[currentLocale];
 
@@ -74,8 +79,15 @@ export default function Home() {
   ];
 
   const startVoiceRecognition = () => {
-    // 檢查是否為 iOS Safari
+    // 檢查是否為移動設備
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent) && !('MSStream' in window);
+    
+    // 手機震動效果
+    if (isMobile && navigator.vibrate) {
+      // 短震動表示開始錄音 (100ms)
+      navigator.vibrate(100);
+    }
     
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       if (isIOSSafari) {
@@ -113,6 +125,12 @@ export default function Home() {
     recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
       const speechResult = event.results[0][0].transcript;
       setInputText(speechResult);
+      
+      // 識別成功時的震動反饋
+      if (isMobile && navigator.vibrate) {
+        // 雙短震表示識別成功 (50ms, 50ms 暫停, 50ms)
+        navigator.vibrate([50, 50, 50]);
+      }
     };
 
     recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -144,6 +162,12 @@ export default function Home() {
       
       setError(errorMessage);
       setIsListening(false);
+      
+      // 錯誤時的震動反饋
+      if (isMobile && navigator.vibrate) {
+        // 長震動表示錯誤 (200ms)
+        navigator.vibrate(200);
+      }
     };
 
     recognitionRef.current.onend = () => {
@@ -214,6 +238,82 @@ export default function Home() {
       }
       document.body.removeChild(textArea);
     }
+  };
+
+  // TTS 語音播放功能
+  const speakTranslation = (text: string, language: TargetLanguage) => {
+    if (!isClient || typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      return;
+    }
+
+    // 偵測移動設備
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // 清除之前的語音
+    speechSynthesis.cancel();
+    
+    const delay = isMobile ? 200 : 100;
+    setTimeout(() => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+      // 設定語言
+      let langCode = '';
+      switch (language) {
+        case 'en':
+          langCode = isMobile ? 'en' : 'en-US';
+          break;
+        case 'th':
+          langCode = isMobile ? 'th' : 'th-TH';
+          break;
+        case 'zh':
+        default:
+          langCode = isMobile ? 'zh' : 'zh-TW';
+          break;
+      }
+      
+      utterance.lang = langCode;
+      utterance.rate = 0.8;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+      
+      // 尋找合適的語音
+      const findVoice = () => {
+        const voices = speechSynthesis.getVoices();
+        let selectedVoice = null;
+        
+        if (language === 'th') {
+          // 泰語特殊處理
+          selectedVoice = voices.find(voice => 
+            voice.lang === 'th-TH' || 
+            voice.lang === 'th-th' || 
+            voice.lang === 'th' ||
+            voice.lang.toLowerCase().startsWith('th') ||
+            voice.name.toLowerCase().includes('thai')
+          );
+        } else {
+          // 其他語言通用搜尋
+          const langPrefix = langCode.split('-')[0];
+          selectedVoice = voices.find(voice => voice.lang.toLowerCase().startsWith(langPrefix));
+        }
+        
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+        }
+        
+        speechSynthesis.speak(utterance);
+      };
+      
+      // 如果語音列表未準備好，等待載入
+      if (speechSynthesis.getVoices().length === 0) {
+        const handleVoicesChanged = () => {
+          findVoice();
+          speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
+        };
+        speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
+      } else {
+        findVoice();
+      }
+    }, delay);
   };
 
   const handleTranslate = async () => {
@@ -350,19 +450,26 @@ export default function Home() {
             {/* Control Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 mt-4">
               {/* Translation Target Language Selector */}
-              <select
-                value={targetLanguage}
-                onChange={(e) => setTargetLanguage(e.target.value as TargetLanguage)}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md
-                         dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-teal-500"
-                disabled={isTranslating}
-              >
-                {languageOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <div className="flex flex-col gap-2">
+                <select
+                  value={targetLanguage}
+                  onChange={(e) => setTargetLanguage(e.target.value as TargetLanguage)}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+                           dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-teal-500"
+                  disabled={isTranslating}
+                >
+                  {languageOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  將翻譯為：<span className="font-medium text-teal-600 dark:text-teal-400">
+                    {languageOptions.find(l => l.value === targetLanguage)?.label}
+                  </span>
+                </p>
+              </div>
 
               {/* Translate Button */}
               <button
@@ -404,22 +511,34 @@ export default function Home() {
           {translationResult && (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">
-{t.resultTitle} ({languageOptions.find(l => l.value === translationResult.targetLanguage)?.label})
+{t.resultTitle} ({languageOptions.find(l => l.value === targetLanguage)?.label})
               </h3>
               <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-md">
                 <div className="flex items-start gap-3">
                   <p className="text-gray-800 dark:text-white text-lg leading-relaxed flex-1">
                     {translationResult.translatedText}
                   </p>
-                  <button
-                    onClick={() => copyToClipboard(translationResult.translatedText)}
-                    className="p-2 text-teal-600 hover:text-teal-700 dark:text-teal-400 
-                             dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20 
-                             rounded-full transition-colors flex-shrink-0"
-                    title="複製翻譯結果"
-                  >
-                    {isCopied ? <Check size={20} /> : <Copy size={20} />}
-                  </button>
+                  <div className="flex gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => copyToClipboard(translationResult.translatedText)}
+                      className="p-2 text-teal-600 hover:text-teal-700 dark:text-teal-400 
+                               dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20 
+                               rounded-full transition-colors"
+                      title="複製翻譯結果"
+                    >
+                      {isCopied ? <Check size={20} /> : <Copy size={20} />}
+                    </button>
+                    
+                    <button
+                      onClick={() => speakTranslation(translationResult.translatedText, translationResult.targetLanguage)}
+                      className="p-2 text-slate-600 hover:text-slate-700 dark:text-slate-400 
+                               dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/20 
+                               rounded-full transition-colors"
+                      title="播放翻譯語音"
+                    >
+                      <Volume2 size={20} />
+                    </button>
+                  </div>
                 </div>
                 {isCopied && (
                   <div className="mt-2 text-sm text-teal-600 dark:text-teal-400">

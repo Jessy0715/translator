@@ -280,7 +280,7 @@ export default function CategoryPage() {
   const params = useParams();
   const categoryId = params.category as string;
   const [sourceLanguage, setSourceLanguage] = useState<LanguageCode>('zh');
-  const [targetLanguage, setTargetLanguage] = useState<LanguageCode>('en');
+  const [targetLanguage, setTargetLanguage] = useState<LanguageCode>('th');
   const [copiedItem, setCopiedItem] = useState<string>('');
   const [isClient, setIsClient] = useState(false);
   
@@ -308,7 +308,7 @@ export default function CategoryPage() {
   const languageOptions = [
     { value: 'zh', label: '中文' },
     { value: 'en', label: 'English' },
-    { value: 'th', label: 'ไทย' }
+    { value: 'th', label: 'ภาษาไทย' }
   ];
 
   // 交換來源語言與目標語言
