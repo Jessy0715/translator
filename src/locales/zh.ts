@@ -16,7 +16,7 @@ export const zh = {
   languages: {
     en: "English (英文)",
     zh: "Chinese (中文)",
-    th: "Thai (泰語)"
+    th: "Thai (泰文)"
   },
   errors: {
     noText: "請輸入要翻譯的文字",

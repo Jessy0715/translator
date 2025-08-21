@@ -74,8 +74,8 @@ export default function Home() {
   
   const localeOptions = [
     { value: "zh", label: "中文" },
-    { value: "en", label: "English" },
-    { value: "th", label: "ไทย" }
+    { value: "en", label: "英文" },
+    { value: "th", label: "泰文" }
   ];
 
   const startVoiceRecognition = () => {

@@ -307,8 +307,8 @@ export default function CategoryPage() {
 
   const languageOptions = [
     { value: 'zh', label: '中文' },
-    { value: 'en', label: 'English' },
-    { value: 'th', label: 'ภาษาไทย' }
+    { value: 'en', label: '英文' },
+    { value: 'th', label: '泰文' }
   ];
 
   // 交換來源語言與目標語言
