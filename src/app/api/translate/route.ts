@@ -40,7 +40,8 @@ const MYMEMORY_URL = 'https://api.mymemory.translated.net/get';
 const languageMap: Record<string, string> = {
   en: 'en',
   zh: 'zh',  // 中文
-  th: 'th'
+  th: 'th',
+  ja: 'ja'   // 日文
 };
 
 export async function POST(request: NextRequest) {
@@ -67,12 +68,16 @@ export async function POST(request: NextRequest) {
     
     // 簡單的語言偵測邏輯
     const detectSourceLanguage = (text: string): string => {
+      // 檢測日文假名（平假名、片假名）- 需在中文前偵測，因漢字重疊
+      const japaneseRegex = /[\u3040-\u309f\u30a0-\u30ff]/;
       // 檢測中文字符（中日韓統一表意文字）
       const chineseRegex = /[\u4e00-\u9fff]/;
       // 檢測泰文字符
       const thaiRegex = /[\u0e00-\u0e7f]/;
-      
-      if (chineseRegex.test(text)) {
+
+      if (japaneseRegex.test(text)) {
+        return 'ja';
+      } else if (chineseRegex.test(text)) {
         return 'zh';
       } else if (thaiRegex.test(text)) {
         return 'th';

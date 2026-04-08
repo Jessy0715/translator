@@ -11,26 +11,31 @@ const phrasesData = {
     titleZh: "機場與交通",
     titleEn: "Airport and Transportation",
     titleTh: "สนามบินและการขนส่ง",
+    titleJa: "空港と交通",
     categories: [
       {
         titleZh: "詢問方向",
         titleEn: "Asking for Directions",
         titleTh: "การถามทิศทาง",
+        titleJa: "道案内",
         phrases: [
           {
             zh: "不好意思，請問服務台在哪裡？",
             en: "Excuse me, where is the information desk?",
-            th: "ขอโทษครับ/ค่ะ เคาน์เตอร์ข้อมูลอยู่ที่ไหนครับ/คะ"
+            th: "ขอโทษครับ/ค่ะ เคาน์เตอร์ข้อมูลอยู่ที่ไหนครับ/คะ",
+            ja: "すみません、インフォメーションデスクはどこですか？"
           },
           {
             zh: "請問如何前往市中心？",
             en: "How do I get to the city center?",
-            th: "ไปใจกลางเมืองยังไงครับ/คะ"
+            th: "ไปใจกลางเมืองยังไงครับ/คะ",
+            ja: "市内中心部へはどうやって行けばいいですか？"
           },
           {
             zh: "這輛公車是開往機場的嗎？",
             en: "Is this the bus to the airport?",
-            th: "รถเมล์คันนี้ไปสนามบินใช่ไหมครับ/คะ"
+            th: "รถเมล์คันนี้ไปสนามบินใช่ไหมครับ/คะ",
+            ja: "このバスは空港行きですか？"
           }
         ]
       },
@@ -38,21 +43,25 @@ const phrasesData = {
         titleZh: "搭乘計程車",
         titleEn: "Taking Taxi",
         titleTh: "การเรียกแท็กซี่",
+        titleJa: "タクシーに乗る",
         phrases: [
           {
             zh: "請載我到這個地址。",
             en: "Please take me to this address.",
-            th: "กรุณาไปที่อยู่นี้ครับ/ค่ะ"
+            th: "กรุณาไปที่อยู่นี้ครับ/ค่ะ",
+            ja: "この住所まで連れて行ってください。"
           },
           {
             zh: "您能在這裡等我一下嗎？",
             en: "Could you wait for me here?",
-            th: "รอผมหน่อยได้ไหมครับ/คะ"
+            th: "รอผมหน่อยได้ไหมครับ/คะ",
+            ja: "ここで少し待っていただけますか？"
           },
           {
             zh: "請在這裡讓我下車。",
             en: "Please drop me off here.",
-            th: "ให้ผมลงตรงนี้ครับ/ค่ะ"
+            th: "ให้ผมลงตรงนี้ครับ/ค่ะ",
+            ja: "ここで降ろしてください。"
           }
         ]
       }
@@ -62,26 +71,31 @@ const phrasesData = {
     titleZh: "住宿",
     titleEn: "Accommodation",
     titleTh: "ที่พัก",
+    titleJa: "宿泊",
     categories: [
       {
         titleZh: "入住與退房",
         titleEn: "Check-in and Check-out",
         titleTh: "เช็คอินและเช็คเอาท์",
+        titleJa: "チェックインとチェックアウト",
         phrases: [
           {
             zh: "我有一個預約，預約人姓名是[你的名字]。",
             en: "I have a reservation under the name [Your Name].",
-            th: "ผมจองไว้ชื่อ [ชื่อของคุณ] ครับ/ค่ะ"
+            th: "ผมจองไว้ชื่อ [ชื่อของคุณ] ครับ/ค่ะ",
+            ja: "[あなたの名前]の名前で予約しています。"
           },
           {
             zh: "退房時間是幾點？",
             en: "What time is check-out?",
-            th: "เช็คเอาท์กี่โมงครับ/คะ"
+            th: "เช็คเอาท์กี่โมงครับ/คะ",
+            ja: "チェックアウトは何時ですか？"
           },
           {
             zh: "可以請您在早上七點叫我起床嗎？",
             en: "Could I have a wake-up call at 7 a.m.?",
-            th: "ช่วยปลุกตอนเช้าตีเจ็ดได้ไหมครับ/คะ"
+            th: "ช่วยปลุกตอนเช้าตีเจ็ดได้ไหมครับ/คะ",
+            ja: "朝7時にモーニングコールをお願いできますか？"
           }
         ]
       },
@@ -89,21 +103,25 @@ const phrasesData = {
         titleZh: "請求協助",
         titleEn: "Requesting Help",
         titleTh: "ขอความช่วยเหลือ",
+        titleJa: "サポートのお願い",
         phrases: [
           {
             zh: "這把鑰匙打不開門。",
             en: "The key doesn't work.",
-            th: "กุญแจใช้ไม่ได้ครับ/ค่ะ"
+            th: "กุญแจใช้ไม่ได้ครับ/ค่ะ",
+            ja: "鍵が開きません。"
           },
           {
             zh: "可以請您幫我搬行李嗎？",
             en: "Could you please help me with my luggage?",
-            th: "ช่วยยกกระเป๋าให้หน่อยได้ไหมครับ/คะ"
+            th: "ช่วยยกกระเป๋าให้หน่อยได้ไหมครับ/คะ",
+            ja: "荷物を運ぶのを手伝っていただけますか？"
           },
           {
             zh: "附近有自助洗衣店嗎？",
             en: "Is there a laundromat nearby?",
-            th: "แถวนี้มีร้านซักรีดไหมครับ/คะ"
+            th: "แถวนี้มีร้านซักรีดไหมครับ/คะ",
+            ja: "近くにコインランドリーはありますか？"
           }
         ]
       }
@@ -113,26 +131,31 @@ const phrasesData = {
     titleZh: "用餐",
     titleEn: "Dining",
     titleTh: "การรับประทานอาหาร",
+    titleJa: "食事",
     categories: [
       {
         titleZh: "點餐",
         titleEn: "Ordering Food",
         titleTh: "การสั่งอาหาร",
+        titleJa: "注文する",
         phrases: [
           {
             zh: "請問有英文菜單嗎？",
             en: "Do you have a menu in English?",
-            th: "มีเมนูภาษาอังกฤษไหมครับ/คะ"
+            th: "มีเมนูภาษาอังกฤษไหมครับ/คะ",
+            ja: "英語のメニューはありますか？"
           },
           {
             zh: "我想點[菜名]。",
             en: "I would like to order [Name of dish].",
-            th: "ผมอยากได้ [ชื่ออาหาร] ครับ/ค่ะ"
+            th: "ผมอยากได้ [ชื่ออาหาร] ครับ/ค่ะ",
+            ja: "[料理名]を注文したいのですが。"
           },
           {
             zh: "可以給我一杯水嗎？",
             en: "Can I have a glass of water, please?",
-            th: "ขอน้ำหนึ่งแก้วได้ไหมครับ/คะ"
+            th: "ขอน้ำหนึ่งแก้วได้ไหมครับ/คะ",
+            ja: "お水を一杯いただけますか？"
           }
         ]
       },
@@ -140,21 +163,25 @@ const phrasesData = {
         titleZh: "用餐後",
         titleEn: "After Dining",
         titleTh: "หลังการรับประทานอาหาร",
+        titleJa: "食後",
         phrases: [
           {
             zh: "麻煩結帳。",
             en: "Could we have the check, please?",
-            th: "เก็บเงินครับ/ค่ะ"
+            th: "เก็บเงินครับ/ค่ะ",
+            ja: "お会計をお願いします。"
           },
           {
             zh: "小費有包含在帳單裡嗎？",
             en: "Is the tip included?",
-            th: "ค่าทิปรวมในบิลแล้วไหมครับ/คะ"
+            th: "ค่าทิปรวมในบิลแล้วไหมครับ/คะ",
+            ja: "チップはこの金額に含まれていますか？"
           },
           {
             zh: "這個很好吃！",
             en: "This is delicious!",
-            th: "อร่อยมากเลยครับ/ค่ะ"
+            th: "อร่อยมากเลยครับ/ค่ะ",
+            ja: "これはとても美味しいです！"
           }
         ]
       }
@@ -164,26 +191,31 @@ const phrasesData = {
     titleZh: "購物",
     titleEn: "Shopping",
     titleTh: "ช้อปปิ้ง",
+    titleJa: "ショッピング",
     categories: [
       {
         titleZh: "詢問價格",
         titleEn: "Asking About Price",
         titleTh: "ถามราคา",
+        titleJa: "値段を聞く",
         phrases: [
           {
             zh: "這個多少錢？",
             en: "How much is this?",
-            th: "อันนี้เท่าไหร่ครับ/คะ"
+            th: "อันนี้เท่าไหร่ครับ/คะ",
+            ja: "これはいくらですか？"
           },
           {
             zh: "你們接受信用卡嗎？",
             en: "Do you accept credit cards?",
-            th: "รับบัตรเครดิตไหมครับ/คะ"
+            th: "รับบัตรเครดิตไหมครับ/คะ",
+            ja: "クレジットカードは使えますか？"
           },
           {
             zh: "這個有打折嗎？",
             en: "Is there a discount on this?",
-            th: "อันนี้มีส่วนลดไหมครับ/คะ"
+            th: "อันนี้มีส่วนลดไหมครับ/คะ",
+            ja: "これは割引がありますか？"
           }
         ]
       },
@@ -191,21 +223,25 @@ const phrasesData = {
         titleZh: "其他",
         titleEn: "Others",
         titleTh: "อื่นๆ",
+        titleJa: "その他",
         phrases: [
           {
             zh: "我能試穿這個嗎？",
             en: "Could I try this on?",
-            th: "ลองใส่ได้ไหมครับ/คะ"
+            th: "ลองใส่ได้ไหมครับ/คะ",
+            ja: "これを試着してもいいですか？"
           },
           {
             zh: "我只是看看，謝謝。",
             en: "I'm just looking, thank you.",
-            th: "แค่ดูครับ/ค่ะ ขอบคุณครับ/ค่ะ"
+            th: "แค่ดูครับ/ค่ะ ขอบคุณครับ/ค่ะ",
+            ja: "ただ見ているだけです、ありがとうございます。"
           },
           {
             zh: "可以幫我包裝起來嗎？",
             en: "Could you wrap this up for me?",
-            th: "ช่วยห่อให้หน่อยได้ไหมครับ/คะ"
+            th: "ช่วยห่อให้หน่อยได้ไหมครับ/คะ",
+            ja: "包んでいただけますか？"
           }
         ]
       }
@@ -215,26 +251,31 @@ const phrasesData = {
     titleZh: "緊急狀況與一般實用片語",
     titleEn: "Emergencies and General Phrases",
     titleTh: "เหตุฉุกเฉินและวลีที่ใช้ทั่วไป",
+    titleJa: "緊急事態と一般フレーズ",
     categories: [
       {
         titleZh: "尋求協助",
         titleEn: "Seeking Help",
         titleTh: "ขอความช่วยเหลือ",
+        titleJa: "助けを求める",
         phrases: [
           {
             zh: "救命！",
             en: "Help!",
-            th: "ช่วยด้วย!"
+            th: "ช่วยด้วย!",
+            ja: "助けてください！"
           },
           {
             zh: "我需要看醫生。",
             en: "I need a doctor.",
-            th: "ผมต้องการหาหมอครับ/ค่ะ"
+            th: "ผมต้องการหาหมอครับ/ค่ะ",
+            ja: "医者が必要です。"
           },
           {
             zh: "我迷路了。",
             en: "I am lost.",
-            th: "ผมหลงทางครับ/ค่ะ"
+            th: "ผมหลงทางครับ/ค่ะ",
+            ja: "道に迷いました。"
           }
         ]
       },
@@ -242,31 +283,37 @@ const phrasesData = {
         titleZh: "日常問候",
         titleEn: "Daily Greetings",
         titleTh: "การทักทาย",
+        titleJa: "日常の挨拶",
         phrases: [
           {
             zh: "你好。",
             en: "Hello / Hi.",
-            th: "สวัสดีครับ/ค่ะ"
+            th: "สวัสดีครับ/ค่ะ",
+            ja: "こんにちは。"
           },
           {
             zh: "謝謝。",
             en: "Thank you.",
-            th: "ขอบคุณครับ/ค่ะ"
+            th: "ขอบคุณครับ/ค่ะ",
+            ja: "ありがとうございます。"
           },
           {
             zh: "不好意思。",
             en: "Excuse me.",
-            th: "ขอโทษครับ/ค่ะ"
+            th: "ขอโทษครับ/ค่ะ",
+            ja: "すみません。"
           },
           {
             zh: "對不起。",
             en: "I'm sorry.",
-            th: "ขอโทษครับ/ค่ะ"
+            th: "ขอโทษครับ/ค่ะ",
+            ja: "ごめんなさい。"
           },
           {
             zh: "洗手間在哪裡？",
             en: "Where is the restroom?",
-            th: "ห้องน้ำอยู่ที่ไหนครับ/คะ"
+            th: "ห้องน้ำอยู่ที่ไหนครับ/คะ",
+            ja: "トイレはどこですか？"
           }
         ]
       }
@@ -274,7 +321,7 @@ const phrasesData = {
   }
 };
 
-type LanguageCode = 'zh' | 'en' | 'th';
+type LanguageCode = 'zh' | 'en' | 'th' | 'ja';
 
 export default function CategoryPage() {
   const params = useParams();
@@ -308,7 +355,8 @@ export default function CategoryPage() {
   const languageOptions = [
     { value: 'zh', label: '中文' },
     { value: 'en', label: '英文' },
-    { value: 'th', label: '泰文' }
+    { value: 'th', label: '泰文' },
+    { value: 'ja', label: '日文' }
   ];
 
   // 交換來源語言與目標語言
@@ -367,8 +415,10 @@ export default function CategoryPage() {
           langCode = isMobile ? 'en' : 'en-US';
           break;
         case 'th':
-          // 移動設備通常支援簡化的語言代碼
           langCode = isMobile ? 'th' : 'th-TH';
+          break;
+        case 'ja':
+          langCode = isMobile ? 'ja' : 'ja-JP';
           break;
         case 'zh':
         default:
@@ -494,6 +544,8 @@ export default function CategoryPage() {
         return categoryData.titleEn;
       case 'th':
         return categoryData.titleTh;
+      case 'ja':
+        return categoryData.titleJa;
       default:
         return categoryData.titleZh;
     }
@@ -569,8 +621,9 @@ export default function CategoryPage() {
           {categoryData.categories.map((subcategory, index) => (
             <div key={index} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
-                {sourceLanguage === 'en' ? subcategory.titleEn : 
-                 sourceLanguage === 'th' ? subcategory.titleTh : 
+                {sourceLanguage === 'en' ? subcategory.titleEn :
+                 sourceLanguage === 'th' ? subcategory.titleTh :
+                 sourceLanguage === 'ja' ? subcategory.titleJa :
                  subcategory.titleZh}
               </h2>
               

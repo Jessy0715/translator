@@ -5,7 +5,7 @@ import { Mic, MicOff, Languages, Loader2, Globe, X, Undo2, BookOpen, Copy, Check
 import Link from "next/link";
 import { locales, type LocaleKey, type Translations, defaultLocale } from "@/locales";
 
-type TargetLanguage = "en" | "zh" | "th";
+type TargetLanguage = "en" | "zh" | "th" | "ja";
 
 interface TranslationResult {
   translatedText: string;
@@ -69,13 +69,15 @@ export default function Home() {
   const languageOptions = [
     { value: "en", label: t.languages.en },
     { value: "zh", label: t.languages.zh },
-    { value: "th", label: t.languages.th }
+    { value: "th", label: t.languages.th },
+    { value: "ja", label: t.languages.ja }
   ];
   
   const localeOptions = [
     { value: "zh", label: "中文" },
     { value: "en", label: "英文" },
-    { value: "th", label: "泰文" }
+    { value: "th", label: "泰文" },
+    { value: "ja", label: "日本語" }
   ];
 
   const startVoiceRecognition = () => {
@@ -264,6 +266,9 @@ export default function Home() {
           break;
         case 'th':
           langCode = isMobile ? 'th' : 'th-TH';
+          break;
+        case 'ja':
+          langCode = isMobile ? 'ja' : 'ja-JP';
           break;
         case 'zh':
         default:

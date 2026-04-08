@@ -1,6 +1,6 @@
 export const zh = {
   title: "即時翻譯",
-  subtitle: "支援英文、中文、泰語的智能翻譯工具",
+  subtitle: "支援英文、中文、泰語、日文的智能翻譯工具",
   inputLabel: "輸入文字",
   inputPlaceholder: "請輸入要翻譯的語言，或點擊麥克風按鈕開始語音輸入...",
   voiceStart: "語音輸入",
@@ -16,7 +16,8 @@ export const zh = {
   languages: {
     en: "English (英文)",
     zh: "Chinese (中文)",
-    th: "Thai (泰文)"
+    th: "Thai (泰文)",
+    ja: "Japanese (日文)"
   },
   errors: {
     noText: "請輸入要翻譯的文字",

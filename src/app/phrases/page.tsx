@@ -12,35 +12,40 @@ const categories = [
     icon: "✈️",
     titleZh: "機場與交通",
     titleEn: "Airport and Transportation",
-    titleTh: "สนามบินและการขนส่ง"
+    titleTh: "สนามบินและการขนส่ง",
+    titleJa: "空港と交通"
   },
   {
     id: "accommodation",
     icon: "🏨",
     titleZh: "住宿",
-    titleEn: "Accommodation", 
-    titleTh: "ที่พัก"
+    titleEn: "Accommodation",
+    titleTh: "ที่พัก",
+    titleJa: "宿泊"
   },
   {
     id: "dining",
     icon: "🍽️",
     titleZh: "用餐",
     titleEn: "Dining",
-    titleTh: "การรับประทานอาหาร"
+    titleTh: "การรับประทานอาหาร",
+    titleJa: "食事"
   },
   {
     id: "shopping",
     icon: "🛍️",
     titleZh: "購物",
     titleEn: "Shopping",
-    titleTh: "ช้อปปิ้ง"
+    titleTh: "ช้อปปิ้ง",
+    titleJa: "ショッピング"
   },
   {
     id: "emergency",
     icon: "🚨",
     titleZh: "緊急狀況與一般實用片語",
     titleEn: "Emergencies and General Phrases",
-    titleTh: "เหตุฉุกเฉินและวลีที่ใช้ทั่วไป"
+    titleTh: "เหตุฉุกเฉินและวลีที่ใช้ทั่วไป",
+    titleJa: "緊急事態と一般フレーズ"
   }
 ];
 
@@ -62,6 +67,8 @@ export default function Phrasebook() {
         return category.titleEn;
       case 'th':
         return category.titleTh;
+      case 'ja':
+        return category.titleJa;
       default:
         return category.titleZh;
     }
@@ -79,7 +86,7 @@ export default function Phrasebook() {
                        hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
             >
               <ArrowLeft size={20} />
-              <span className="text-sm">{currentLocale === 'zh' ? '返回' : currentLocale === 'en' ? 'Back' : 'กลับ'}</span>
+              <span className="text-sm">{currentLocale === 'zh' ? '返回' : currentLocale === 'en' ? 'Back' : currentLocale === 'ja' ? '戻る' : 'กลับ'}</span>
             </Link>
           </div>
 
@@ -88,8 +95,9 @@ export default function Phrasebook() {
               {t.phrasebook}
             </h1>
             <p className="text-gray-600 dark:text-gray-300">
-              {currentLocale === 'zh' ? '出國旅遊常用語速查手冊' : 
-               currentLocale === 'en' ? 'Quick reference guide for travel phrases' : 
+              {currentLocale === 'zh' ? '出國旅遊常用語速查手冊' :
+               currentLocale === 'en' ? 'Quick reference guide for travel phrases' :
+               currentLocale === 'ja' ? '旅行に役立つフレーズ集' :
                'คู่มืออ้างอิงด่วนสำหรับวลีการเดินทาง'}
             </p>
           </div>
@@ -101,8 +109,9 @@ export default function Phrasebook() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
             <input
               type="text"
-              placeholder={currentLocale === 'zh' ? '搜尋分類...' : 
-                          currentLocale === 'en' ? 'Search categories...' : 
+              placeholder={currentLocale === 'zh' ? '搜尋分類...' :
+                          currentLocale === 'en' ? 'Search categories...' :
+                          currentLocale === 'ja' ? 'カテゴリを検索...' :
                           'ค้นหาหมวดหมู่...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -117,16 +126,18 @@ export default function Phrasebook() {
         {/* Categories List */}
         <main className="space-y-4">
           <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-6 text-center">
-            {currentLocale === 'zh' ? '情境分類' : 
-             currentLocale === 'en' ? 'Categories' : 
+            {currentLocale === 'zh' ? '情境分類' :
+             currentLocale === 'en' ? 'Categories' :
+             currentLocale === 'ja' ? 'シチュエーション別' :
              'หมวดหมู่สถานการณ์'}
           </h2>
 
           <div className="grid gap-4">
             {filteredCategories.length === 0 ? (
               <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                {currentLocale === 'zh' ? '找不到相關分類' : 
-                 currentLocale === 'en' ? 'No categories found' : 
+                {currentLocale === 'zh' ? '找不到相關分類' :
+                 currentLocale === 'en' ? 'No categories found' :
+                 currentLocale === 'ja' ? '該当するカテゴリが見つかりません' :
                  'ไม่พบหมวดหมู่'}
               </div>
             ) : (
@@ -171,6 +182,7 @@ export default function Phrasebook() {
             <option value="zh">中文</option>
             <option value="en">English</option>
             <option value="th">ไทย</option>
+            <option value="ja">日本語</option>
           </select>
         </div>
       </div>
