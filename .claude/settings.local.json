@@ -4,7 +4,11 @@
       "Bash(mkdir:*)",
       "WebFetch(domain:libretranslate.com)",
       "Bash(npx tsc:*)",
-      "Bash(echo \"exit: $?\")"
+      "Bash(echo \"exit: $?\")",
+      "Bash(git config:*)",
+      "Bash(ssh:*)",
+      "Bash(npm show:*)",
+      "Bash(npm install:*)"
     ],
     "deny": []
   }
