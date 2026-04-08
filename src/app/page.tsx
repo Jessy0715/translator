@@ -1,58 +1,30 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Mic, MicOff, Languages, Loader2, Globe, X, Undo2, BookOpen, Copy, Check, Volume2, Bookmark } from "lucide-react";
+import { Mic, MicOff, Languages, Loader2, X, Undo2, BookOpen, Copy, Check, Volume2, Bookmark } from "lucide-react";
 import Link from "next/link";
 import { locales, type LocaleKey, type Translations, defaultLocale } from "@/locales";
 import { useTranslationHistory } from "@/hooks/useTranslationHistory";
 import { useSavedPhrases } from "@/hooks/useSavedPhrases";
 import { StarButton } from "@/components/StarButton";
+import { LOCALE_OPTIONS, LANGUAGE_KEYS } from "@/constants/options";
 import type { LanguageCode } from "@/types/saved";
-
-type TargetLanguage = "en" | "zh" | "th" | "ja";
+import type { SpeechRecognitionInstance, SpeechRecognitionEvent, SpeechRecognitionErrorEvent } from "@/types/speech";
 
 interface TranslationResult {
   translatedText: string;
-  targetLanguage: TargetLanguage;
+  targetLanguage: LanguageCode;
 }
 
-interface SpeechRecognitionEvent {
-  results: {
-    [key: number]: {
-      [key: number]: {
-        transcript: string;
-      };
-    };
-  };
-}
-
-interface SpeechRecognitionErrorEvent {
-  error: string;
-}
-
-interface SpeechRecognition {
-  lang: string;
-  interimResults: boolean;
-  maxAlternatives: number;
-  onstart: () => void;
-  onresult: (event: SpeechRecognitionEvent) => void;
-  onerror: (event: SpeechRecognitionErrorEvent) => void;
-  onend: () => void;
-  start: () => void;
-  stop: () => void;
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition?: new () => SpeechRecognition;
-    webkitSpeechRecognition?: new () => SpeechRecognition;
-  }
+// 從翻譯結果產生穩定的收藏 id
+function buildSaveId(inputText: string, targetLanguage: LanguageCode): string {
+  return btoa(encodeURIComponent(inputText + targetLanguage));
 }
 
 export default function Home() {
   const [inputText, setInputText] = useState("");
   const [translationResult, setTranslationResult] = useState<TranslationResult | null>(null);
-  const [targetLanguage, setTargetLanguage] = useState<TargetLanguage>("th");
+  const [targetLanguage, setTargetLanguage] = useState<LanguageCode>("th");
   const [isListening, setIsListening] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [error, setError] = useState("");
@@ -61,69 +33,41 @@ export default function Home() {
   const [showUndoButton, setShowUndoButton] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const { addToHistory } = useTranslationHistory();
   const { savePhrase, removePhrase, isSaved } = useSavedPhrases();
 
   useEffect(() => {
     setIsClient(true);
   }, []);
-  
-  const t: Translations = locales[currentLocale];
 
-  const languageOptions = [
-    { value: "en", label: t.languages.en },
-    { value: "zh", label: t.languages.zh },
-    { value: "th", label: t.languages.th },
-    { value: "ja", label: t.languages.ja }
-  ];
-  
-  const localeOptions = [
-    { value: "zh", label: "中文" },
-    { value: "en", label: "英文" },
-    { value: "th", label: "泰文" },
-    { value: "ja", label: "日本語" }
-  ];
+  const t: Translations = locales[currentLocale];
+  const languageOptions = LANGUAGE_KEYS.map((key) => ({ value: key, label: t.languages[key] }));
+
+  // --- 語音辨識 ---
 
   const startVoiceRecognition = () => {
-    // 檢查是否為移動設備
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent) && !('MSStream' in window);
-    
-    // 手機震動效果
-    if (isMobile && navigator.vibrate) {
-      // 短震動表示開始錄音 (100ms)
-      navigator.vibrate(100);
-    }
-    
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      if (isIOSSafari) {
-        setError(t.errors.iosSpeechSupport);
-      } else {
-        setError(t.errors.noSpeechSupport);
-      }
+    const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent) && !("MSStream" in window);
+
+    if (isMobile && navigator.vibrate) navigator.vibrate(100);
+
+    if (!("webkitSpeechRecognition" in window) && !("SpeechRecognition" in window)) {
+      setError(isIOSSafari ? t.errors.iosSpeechSupport : t.errors.noSpeechSupport);
       return;
     }
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
     if (!SpeechRecognition) {
       setError(t.errors.noSpeechSupport);
       return;
     }
-    
+
     recognitionRef.current = new SpeechRecognition();
-    
-    // iOS 特殊設定
-    recognitionRef.current.lang = "zh-TW";
+    recognitionRef.current.lang = isIOSSafari ? "zh" : "zh-TW";
     recognitionRef.current.interimResults = false;
     recognitionRef.current.maxAlternatives = 1;
-    
-    // iOS 需要更寬鬆的設定
-    if (isIOSSafari) {
-      recognitionRef.current.lang = "zh";  // iOS 使用較簡單的語言代碼
-    }
 
     recognitionRef.current.onstart = () => {
       setIsListening(true);
@@ -131,75 +75,44 @@ export default function Home() {
     };
 
     recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
-      const speechResult = event.results[0][0].transcript;
-      setInputText(speechResult);
-      
-      // 識別成功時的震動反饋
-      if (isMobile && navigator.vibrate) {
-        // 雙短震表示識別成功 (50ms, 50ms 暫停, 50ms)
-        navigator.vibrate([50, 50, 50]);
-      }
+      setInputText(event.results[0][0].transcript);
+      if (isMobile && navigator.vibrate) navigator.vibrate([50, 50, 50]);
     };
 
     recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
-      let errorMessage = "";
-      
-      switch (event.error) {
-        case "service-not-allowed":
-          errorMessage = "語音辨識服務被拒絕。請檢查瀏覽器權限設定，或嘗試在設定中允許麥克風存取";
-          break;
-        case "not-allowed":
-          errorMessage = "麥克風權限被拒絕。請在瀏覽器設定中允許此網站使用麥克風";
-          break;
-        case "no-speech":
-          errorMessage = "未偵測到語音輸入，請再試一次";
-          break;
-        case "network":
-          errorMessage = "網路連線問題，請檢查網路連線";
-          break;
-        case "audio-capture":
-          errorMessage = "無法存取麥克風，請確認麥克風已連接且正常運作";
-          break;
-        default:
-          if (isIOSSafari) {
-            errorMessage = `iOS Safari 語音功能受限 (${event.error})。建議：1.檢查「設定→Safari→麥克風」權限 2.嘗試使用其他瀏覽器如 Chrome`;
-          } else {
-            errorMessage = `語音辨識錯誤: ${event.error}`;
-          }
-      }
-      
-      setError(errorMessage);
+      const errorMap: Record<string, string> = {
+        "service-not-allowed": t.errors.serviceNotAllowed,
+        "not-allowed": t.errors.notAllowed,
+        "no-speech": t.errors.noSpeech,
+        network: t.errors.network,
+        "audio-capture": t.errors.audioCapture,
+      };
+      setError(
+        errorMap[event.error] ??
+          (isIOSSafari ? `${t.errors.iosLimited} (${event.error})` : `${t.errors.speechGeneral}: ${event.error}`)
+      );
       setIsListening(false);
-      
-      // 錯誤時的震動反饋
-      if (isMobile && navigator.vibrate) {
-        // 長震動表示錯誤 (200ms)
-        navigator.vibrate(200);
-      }
+      if (isMobile && navigator.vibrate) navigator.vibrate(200);
     };
 
-    recognitionRef.current.onend = () => {
-      setIsListening(false);
-    };
+    recognitionRef.current.onend = () => setIsListening(false);
 
-    // 使用 try-catch 包裹 start() 方法
     try {
       recognitionRef.current.start();
-    } catch (error) {
-      setError("無法啟動語音辨識，請確認瀏覽器權限設定");
+    } catch {
+      setError(t.errors.cannotStart);
       setIsListening(false);
     }
   };
 
   const stopVoiceRecognition = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
+    recognitionRef.current?.stop();
     setIsListening(false);
   };
 
+  // --- 輸入管理 ---
+
   const clearInput = () => {
-    // 只有在有文字時才保存並顯示復原按鈕
     if (inputText.trim()) {
       setLastClearedText(inputText);
       setShowUndoButton(true);
@@ -215,154 +128,99 @@ export default function Home() {
     setLastClearedText("");
   };
 
-  // 監聽手動輸入變化，隱藏復原按鈕
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputText(e.target.value);
-    // 如果使用者手動修改文字，隱藏復原按鈕
-    if (showUndoButton) {
-      setShowUndoButton(false);
-    }
+    if (showUndoButton) setShowUndoButton(false);
   };
 
-  // 複製到剪貼板
+  // --- 複製到剪貼板 ---
+
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000); // 2秒後隱藏複製成功狀態
-    } catch (error) {
-      // 如果 clipboard API 不可用，使用舊方法
-      const textArea = document.createElement('textarea');
-      textArea.value = text;
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      try {
-        document.execCommand('copy');
-        setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 2000);
-      } catch (fallbackError) {
-        console.error('複製失敗:', fallbackError);
-      }
-      document.body.removeChild(textArea);
+    } catch {
+      const el = document.createElement("textarea");
+      el.value = text;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
     }
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
-  // TTS 語音播放功能
-  const speakTranslation = (text: string, language: TargetLanguage) => {
-    if (!isClient || typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      return;
-    }
+  // --- TTS ---
 
-    // 偵測移動設備
+  const speakTranslation = (text: string, language: LanguageCode) => {
+    if (!isClient || !("speechSynthesis" in window)) return;
+
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const langCodeMap: Record<LanguageCode, [string, string]> = {
+      en: ["en", "en-US"],
+      th: ["th", "th-TH"],
+      ja: ["ja", "ja-JP"],
+      zh: ["zh", "zh-TW"],
+    };
+    const langCode = langCodeMap[language][isMobile ? 0 : 1];
 
-    // 清除之前的語音
     speechSynthesis.cancel();
-    
-    const delay = isMobile ? 200 : 100;
     setTimeout(() => {
       const utterance = new SpeechSynthesisUtterance(text);
-      
-      // 設定語言
-      let langCode = '';
-      switch (language) {
-        case 'en':
-          langCode = isMobile ? 'en' : 'en-US';
-          break;
-        case 'th':
-          langCode = isMobile ? 'th' : 'th-TH';
-          break;
-        case 'ja':
-          langCode = isMobile ? 'ja' : 'ja-JP';
-          break;
-        case 'zh':
-        default:
-          langCode = isMobile ? 'zh' : 'zh-TW';
-          break;
-      }
-      
       utterance.lang = langCode;
       utterance.rate = 0.8;
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
-      
-      // 尋找合適的語音
+
       const findVoice = () => {
         const voices = speechSynthesis.getVoices();
-        let selectedVoice = null;
-        
-        if (language === 'th') {
-          // 泰語特殊處理
-          selectedVoice = voices.find(voice => 
-            voice.lang === 'th-TH' || 
-            voice.lang === 'th-th' || 
-            voice.lang === 'th' ||
-            voice.lang.toLowerCase().startsWith('th') ||
-            voice.name.toLowerCase().includes('thai')
-          );
-        } else {
-          // 其他語言通用搜尋
-          const langPrefix = langCode.split('-')[0];
-          selectedVoice = voices.find(voice => voice.lang.toLowerCase().startsWith(langPrefix));
-        }
-        
-        if (selectedVoice) {
-          utterance.voice = selectedVoice;
-        }
-        
+        const voice =
+          language === "th"
+            ? voices.find(
+                (v) =>
+                  ["th-TH", "th-th", "th"].includes(v.lang) ||
+                  v.lang.toLowerCase().startsWith("th") ||
+                  v.name.toLowerCase().includes("thai")
+              )
+            : voices.find((v) => v.lang.toLowerCase().startsWith(langCode.split("-")[0]));
+        if (voice) utterance.voice = voice;
         speechSynthesis.speak(utterance);
       };
-      
-      // 如果語音列表未準備好，等待載入
+
       if (speechSynthesis.getVoices().length === 0) {
-        const handleVoicesChanged = () => {
+        speechSynthesis.addEventListener("voiceschanged", function handler() {
           findVoice();
-          speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
-        };
-        speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
+          speechSynthesis.removeEventListener("voiceschanged", handler);
+        });
       } else {
         findVoice();
       }
-    }, delay);
+    }, isMobile ? 200 : 100);
   };
+
+  // --- 翻譯 ---
 
   const handleTranslate = async () => {
     if (!inputText.trim()) {
       setError(t.errors.noText);
       return;
     }
-
     setIsTranslating(true);
     setError("");
-
     try {
       const response = await fetch("/api/translate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text: inputText,
-          targetLanguage,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: inputText, targetLanguage }),
       });
-
-      if (!response.ok) {
-        throw new Error("翻譯請求失敗");
-      }
-
+      if (!response.ok) throw new Error();
       const data = await response.json();
-      setTranslationResult({
-        translatedText: data.translatedText,
-        targetLanguage,
-      });
-      // 自動記錄到歷史
+      setTranslationResult({ translatedText: data.translatedText, targetLanguage });
       addToHistory({
         inputText,
         translatedText: data.translatedText,
-        sourceLanguage: (data.sourceLanguage ?? 'zh') as LanguageCode,
-        targetLanguage: targetLanguage as LanguageCode,
+        sourceLanguage: (data.sourceLanguage ?? "zh") as LanguageCode,
+        targetLanguage,
       });
     } catch {
       setError(t.errors.translationError);
@@ -371,22 +229,37 @@ export default function Home() {
     }
   };
 
+  // --- 收藏翻譯結果 ---
+
+  const handleToggleSave = () => {
+    if (!translationResult) return;
+    const id = buildSaveId(inputText, translationResult.targetLanguage);
+    if (isSaved(id)) {
+      removePhrase(id);
+    } else {
+      const langFields = { zh: "", en: "", th: "", ja: "" };
+      langFields[translationResult.targetLanguage] = translationResult.translatedText;
+      savePhrase({
+        id,
+        source: "translation",
+        savedAt: Date.now(),
+        ...langFields,
+        targetLanguage: translationResult.targetLanguage,
+      });
+    }
+  };
+
+  // --- 渲染 ---
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-slate-800">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <header className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-2">
-            {t.title}
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300 mb-4">
-            {t.subtitle}
-          </p>
-          {/* Interface Language Switcher */}
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-2">{t.title}</h1>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">{t.subtitle}</p>
           <div className="flex flex-col items-center gap-2">
-            <label className="text-sm text-gray-600 dark:text-gray-400">
-              {t.interfaceLanguage}
-            </label>
+            <label className="text-sm text-gray-600 dark:text-gray-400">{t.interfaceLanguage}</label>
             <select
               value={currentLocale}
               onChange={(e) => setCurrentLocale(e.target.value as LocaleKey)}
@@ -394,10 +267,8 @@ export default function Home() {
                        rounded-md px-4 py-2 text-sm text-gray-700 dark:text-gray-300
                        focus:outline-none focus:ring-2 focus:ring-teal-500"
             >
-              {localeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
+              {LOCALE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
           </div>
@@ -408,7 +279,7 @@ export default function Home() {
           {/* Input Section */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
             <label htmlFor="input-text" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-{t.inputLabel}
+              {t.inputLabel}
             </label>
             <div className="relative">
               <textarea
@@ -416,111 +287,76 @@ export default function Home() {
                 value={inputText}
                 onChange={handleInputChange}
                 placeholder={t.inputPlaceholder}
-                className="w-full h-32 p-3 pr-24 border border-gray-300 dark:border-gray-600 rounded-md 
+                className="w-full h-32 p-3 pr-24 border border-gray-300 dark:border-gray-600 rounded-md
                          focus:ring-2 focus:ring-teal-500 focus:border-transparent
                          dark:bg-gray-700 dark:text-white resize-none"
               />
-              
-              {/* Icons in textarea */}
               <div className="absolute top-3 right-3 flex gap-1">
-                {/* Undo button - only show after clearing with X button */}
                 {showUndoButton && (
-                  <button
-                    onClick={undoClear}
-                    className="p-1 text-amber-600 hover:text-amber-700 dark:hover:text-amber-400 
-                             rounded transition-colors"
-                    disabled={isTranslating}
-                    title="復原清空"
-                  >
+                  <button onClick={undoClear} disabled={isTranslating} title="復原清空"
+                    className="p-1 text-amber-600 hover:text-amber-700 dark:hover:text-amber-400 rounded transition-colors">
                     <Undo2 size={20} />
                   </button>
                 )}
-                
-                {/* Clear button - only show when there's text and no undo button */}
                 {inputText.trim() && !showUndoButton && (
-                  <button
-                    onClick={clearInput}
-                    className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 
-                             rounded transition-colors"
-                    disabled={isTranslating}
-                    title="清空輸入"
-                  >
+                  <button onClick={clearInput} disabled={isTranslating} title="清空輸入"
+                    className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded transition-colors">
                     <X size={20} />
                   </button>
                 )}
-                
-                {/* Voice button */}
                 <button
                   onClick={isListening ? stopVoiceRecognition : startVoiceRecognition}
-                  className={`p-1 rounded transition-colors
-                    ${isListening 
-                      ? "text-red-500 hover:text-red-600" 
-                      : "text-teal-600 hover:text-teal-700"
-                    }`}
                   disabled={isTranslating}
                   title={isListening ? "停止語音輸入" : "開始語音輸入"}
+                  className={`p-1 rounded transition-colors ${isListening ? "text-red-500 hover:text-red-600" : "text-teal-600 hover:text-teal-700"}`}
                 >
                   {isListening ? <MicOff size={20} /> : <Mic size={20} />}
                 </button>
               </div>
             </div>
-            
+
             {/* Control Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 mt-4">
-              {/* Translation Target Language Selector */}
               <div className="flex flex-col gap-2">
                 <select
                   value={targetLanguage}
-                  onChange={(e) => setTargetLanguage(e.target.value as TargetLanguage)}
+                  onChange={(e) => setTargetLanguage(e.target.value as LanguageCode)}
+                  disabled={isTranslating}
                   className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md
                            dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-teal-500"
-                  disabled={isTranslating}
                 >
-                  {languageOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
+                  {languageOptions.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  將翻譯為：<span className="font-medium text-teal-600 dark:text-teal-400">
-                    {languageOptions.find(l => l.value === targetLanguage)?.label}
+                  將翻譯為：
+                  <span className="font-medium text-teal-600 dark:text-teal-400">
+                    {languageOptions.find((l) => l.value === targetLanguage)?.label}
                   </span>
                 </p>
               </div>
 
-              {/* Translate Button */}
               <button
                 onClick={handleTranslate}
                 disabled={isTranslating || !inputText.trim()}
-                className="flex items-center justify-center gap-2 px-6 py-2 bg-teal-600 text-white 
-                         rounded-md hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed
-                         transition-colors"
+                className="flex items-center justify-center gap-2 px-6 py-2 bg-teal-600 text-white
+                         rounded-md hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
               >
-                {isTranslating ? (
-                  <Loader2 size={20} className="animate-spin" />
-                ) : (
-                  <Languages size={20} />
-                )}
+                {isTranslating ? <Loader2 size={20} className="animate-spin" /> : <Languages size={20} />}
                 {isTranslating ? t.translating : t.translate}
               </button>
 
-              {/* Phrasebook Button */}
-              <Link
-                href="/phrases"
+              <Link href="/phrases"
                 className="flex items-center justify-center gap-2 px-6 py-2 bg-slate-600 text-white
-                         rounded-md hover:bg-slate-700 transition-colors font-medium"
-              >
+                         rounded-md hover:bg-slate-700 transition-colors font-medium">
                 <BookOpen size={20} />
                 {t.phrasebook}
               </Link>
 
-              {/* Saved Button */}
-              <Link
-                href="/saved"
+              <Link href="/saved"
                 className="flex items-center justify-center gap-2 px-6 py-2 bg-slate-600 text-white
-                         rounded-md hover:bg-slate-700 transition-colors font-medium"
-              >
+                         rounded-md hover:bg-slate-700 transition-colors font-medium">
                 <Bookmark size={20} />
                 {t.saved}
               </Link>
@@ -529,8 +365,7 @@ export default function Home() {
 
           {/* Error Message */}
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 
-                          rounded-md p-4 text-red-700 dark:text-red-300">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4 text-red-700 dark:text-red-300">
               {error}
             </div>
           )}
@@ -539,7 +374,7 @@ export default function Home() {
           {translationResult && (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">
-{t.resultTitle} ({languageOptions.find(l => l.value === targetLanguage)?.label})
+                {t.resultTitle} ({languageOptions.find((l) => l.value === targetLanguage)?.label})
               </h3>
               <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-md">
                 <div className="flex items-start gap-3">
@@ -548,60 +383,34 @@ export default function Home() {
                   </p>
                   <div className="flex gap-1 flex-shrink-0">
                     <StarButton
-                      isSaved={isSaved(btoa(encodeURIComponent(inputText + translationResult.targetLanguage)))}
-                      onToggle={() => {
-                        const id = btoa(encodeURIComponent(inputText + translationResult.targetLanguage));
-                        if (isSaved(id)) {
-                          removePhrase(id);
-                        } else {
-                          savePhrase({
-                            id,
-                            source: 'translation',
-                            savedAt: Date.now(),
-                            zh: translationResult.targetLanguage === 'zh' ? translationResult.translatedText : inputText,
-                            en: translationResult.targetLanguage === 'en' ? translationResult.translatedText : '',
-                            th: translationResult.targetLanguage === 'th' ? translationResult.translatedText : '',
-                            ja: translationResult.targetLanguage === 'ja' ? translationResult.translatedText : '',
-                            targetLanguage: translationResult.targetLanguage as LanguageCode,
-                          });
-                        }
-                      }}
+                      isSaved={isSaved(buildSaveId(inputText, translationResult.targetLanguage))}
+                      onToggle={handleToggleSave}
                     />
-                    <button
-                      onClick={() => copyToClipboard(translationResult.translatedText)}
-                      className="p-2 text-teal-600 hover:text-teal-700 dark:text-teal-400
-                               dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20
-                               rounded-full transition-colors"
+                    <button onClick={() => copyToClipboard(translationResult.translatedText)}
                       title="複製翻譯結果"
-                    >
+                      className="p-2 text-teal-600 hover:text-teal-700 dark:text-teal-400
+                               dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-full transition-colors">
                       {isCopied ? <Check size={20} /> : <Copy size={20} />}
                     </button>
-
-                    <button
-                      onClick={() => speakTranslation(translationResult.translatedText, translationResult.targetLanguage)}
-                      className="p-2 text-slate-600 hover:text-slate-700 dark:text-slate-400
-                               dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/20
-                               rounded-full transition-colors"
+                    <button onClick={() => speakTranslation(translationResult.translatedText, translationResult.targetLanguage)}
                       title="播放翻譯語音"
-                    >
+                      className="p-2 text-slate-600 hover:text-slate-700 dark:text-slate-400
+                               dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/20 rounded-full transition-colors">
                       <Volume2 size={20} />
                     </button>
                   </div>
                 </div>
                 {isCopied && (
-                  <div className="mt-2 text-sm text-teal-600 dark:text-teal-400">
-                    ✓ 已複製到剪貼板
-                  </div>
+                  <div className="mt-2 text-sm text-teal-600 dark:text-teal-400">✓ 已複製到剪貼板</div>
                 )}
               </div>
             </div>
           )}
 
-          {/* Status Indicator */}
+          {/* Listening Status */}
           {isListening && (
-            <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 
-                          rounded-md p-4 text-teal-700 dark:text-teal-300 text-center">
-{t.listeningStatus}
+            <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-md p-4 text-teal-700 dark:text-teal-300 text-center">
+              {t.listeningStatus}
             </div>
           )}
         </main>
