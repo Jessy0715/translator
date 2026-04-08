@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { ArrowLeft, ArrowLeftRight, Volume2, Copy, Check } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useSavedPhrases } from "@/hooks/useSavedPhrases";
+import { StarButton } from "@/components/StarButton";
 
 // 常用語資料
 const phrasesData = {
@@ -330,7 +332,8 @@ export default function CategoryPage() {
   const [targetLanguage, setTargetLanguage] = useState<LanguageCode>('th');
   const [copiedItem, setCopiedItem] = useState<string>('');
   const [isClient, setIsClient] = useState(false);
-  
+  const { savePhrase, removePhrase, isSaved } = useSavedPhrases();
+
   const categoryData = phrasesData[categoryId as keyof typeof phrasesData];
 
   useEffect(() => {
@@ -642,20 +645,42 @@ export default function CategoryPage() {
                       </p>
                       
                       <div className="flex gap-1">
+                        <StarButton
+                          isSaved={isSaved(`${categoryId}__${phrase.zh}`)}
+                          onToggle={() => {
+                            const id = `${categoryId}__${phrase.zh}`;
+                            if (isSaved(id)) {
+                              removePhrase(id);
+                            } else {
+                              savePhrase({
+                                id,
+                                source: 'phrasebook',
+                                savedAt: Date.now(),
+                                zh: phrase.zh,
+                                en: phrase.en,
+                                th: phrase.th,
+                                ja: phrase.ja,
+                                category: categoryId,
+                                subcategory: subcategory.titleZh,
+                              });
+                            }
+                          }}
+                          size={18}
+                        />
                         <button
                           onClick={() => copyToClipboard(phrase[targetLanguage], `${index}-${phraseIndex}-target`)}
-                          className="p-2 text-slate-500 hover:text-slate-600 dark:text-slate-400 
-                                   dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/20 
+                          className="p-2 text-slate-500 hover:text-slate-600 dark:text-slate-400
+                                   dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/20
                                    rounded-full transition-colors"
                           title="複製譯文"
                         >
                           {copiedItem === `${index}-${phraseIndex}-target` ? <Check size={18} /> : <Copy size={18} />}
                         </button>
-                        
+
                         <button
                           onClick={() => speakText(phrase[targetLanguage], targetLanguage)}
-                          className="p-2 text-teal-600 hover:text-teal-700 dark:text-teal-400 
-                                   dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20 
+                          className="p-2 text-teal-600 hover:text-teal-700 dark:text-teal-400
+                                   dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20
                                    rounded-full transition-colors"
                           title="播放發音"
                         >

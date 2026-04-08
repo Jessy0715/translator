@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(mkdir:*)",
-      "WebFetch(domain:libretranslate.com)"
+      "WebFetch(domain:libretranslate.com)",
+      "Bash(npx tsc:*)",
+      "Bash(echo \"exit: $?\")"
     ],
     "deny": []
   }

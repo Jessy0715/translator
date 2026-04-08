@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Mic, MicOff, Languages, Loader2, Globe, X, Undo2, BookOpen, Copy, Check, Volume2 } from "lucide-react";
+import { Mic, MicOff, Languages, Loader2, Globe, X, Undo2, BookOpen, Copy, Check, Volume2, Bookmark } from "lucide-react";
 import Link from "next/link";
 import { locales, type LocaleKey, type Translations, defaultLocale } from "@/locales";
+import { useTranslationHistory } from "@/hooks/useTranslationHistory";
+import { useSavedPhrases } from "@/hooks/useSavedPhrases";
+import { StarButton } from "@/components/StarButton";
+import type { LanguageCode } from "@/types/saved";
 
 type TargetLanguage = "en" | "zh" | "th" | "ja";
 
@@ -59,6 +63,8 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false);
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const { addToHistory } = useTranslationHistory();
+  const { savePhrase, removePhrase, isSaved } = useSavedPhrases();
 
   useEffect(() => {
     setIsClient(true);
@@ -351,6 +357,13 @@ export default function Home() {
         translatedText: data.translatedText,
         targetLanguage,
       });
+      // 自動記錄到歷史
+      addToHistory({
+        inputText,
+        translatedText: data.translatedText,
+        sourceLanguage: (data.sourceLanguage ?? 'zh') as LanguageCode,
+        targetLanguage: targetLanguage as LanguageCode,
+      });
     } catch {
       setError(t.errors.translationError);
     } finally {
@@ -377,7 +390,7 @@ export default function Home() {
             <select
               value={currentLocale}
               onChange={(e) => setCurrentLocale(e.target.value as LocaleKey)}
-              className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 
+              className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600
                        rounded-md px-4 py-2 text-sm text-gray-700 dark:text-gray-300
                        focus:outline-none focus:ring-2 focus:ring-teal-500"
             >
@@ -495,11 +508,21 @@ export default function Home() {
               {/* Phrasebook Button */}
               <Link
                 href="/phrases"
-                className="flex items-center justify-center gap-2 px-6 py-2 bg-slate-600 text-white 
+                className="flex items-center justify-center gap-2 px-6 py-2 bg-slate-600 text-white
                          rounded-md hover:bg-slate-700 transition-colors font-medium"
               >
                 <BookOpen size={20} />
                 {t.phrasebook}
+              </Link>
+
+              {/* Saved Button */}
+              <Link
+                href="/saved"
+                className="flex items-center justify-center gap-2 px-6 py-2 bg-slate-600 text-white
+                         rounded-md hover:bg-slate-700 transition-colors font-medium"
+              >
+                <Bookmark size={20} />
+                {t.saved}
               </Link>
             </div>
           </div>
@@ -524,20 +547,40 @@ export default function Home() {
                     {translationResult.translatedText}
                   </p>
                   <div className="flex gap-1 flex-shrink-0">
+                    <StarButton
+                      isSaved={isSaved(btoa(encodeURIComponent(inputText + translationResult.targetLanguage)))}
+                      onToggle={() => {
+                        const id = btoa(encodeURIComponent(inputText + translationResult.targetLanguage));
+                        if (isSaved(id)) {
+                          removePhrase(id);
+                        } else {
+                          savePhrase({
+                            id,
+                            source: 'translation',
+                            savedAt: Date.now(),
+                            zh: translationResult.targetLanguage === 'zh' ? translationResult.translatedText : inputText,
+                            en: translationResult.targetLanguage === 'en' ? translationResult.translatedText : '',
+                            th: translationResult.targetLanguage === 'th' ? translationResult.translatedText : '',
+                            ja: translationResult.targetLanguage === 'ja' ? translationResult.translatedText : '',
+                            targetLanguage: translationResult.targetLanguage as LanguageCode,
+                          });
+                        }
+                      }}
+                    />
                     <button
                       onClick={() => copyToClipboard(translationResult.translatedText)}
-                      className="p-2 text-teal-600 hover:text-teal-700 dark:text-teal-400 
-                               dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20 
+                      className="p-2 text-teal-600 hover:text-teal-700 dark:text-teal-400
+                               dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-900/20
                                rounded-full transition-colors"
                       title="複製翻譯結果"
                     >
                       {isCopied ? <Check size={20} /> : <Copy size={20} />}
                     </button>
-                    
+
                     <button
                       onClick={() => speakTranslation(translationResult.translatedText, translationResult.targetLanguage)}
-                      className="p-2 text-slate-600 hover:text-slate-700 dark:text-slate-400 
-                               dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/20 
+                      className="p-2 text-slate-600 hover:text-slate-700 dark:text-slate-400
+                               dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/20
                                rounded-full transition-colors"
                       title="播放翻譯語音"
                     >

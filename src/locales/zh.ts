@@ -13,6 +13,7 @@ export const zh = {
   interfaceLanguage: "介面語言",
   translateTo: "翻譯成",
   phrasebook: "常用語手冊",
+  saved: "已儲存",
   languages: {
     en: "English (英文)",
     zh: "Chinese (中文)",

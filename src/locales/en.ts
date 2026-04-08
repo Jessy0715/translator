@@ -13,6 +13,7 @@ export const en = {
   interfaceLanguage: "Interface Language",
   translateTo: "Translate to",
   phrasebook: "Phrasebook",
+  saved: "Saved",
   languages: {
     en: "English",
     zh: "Chinese",

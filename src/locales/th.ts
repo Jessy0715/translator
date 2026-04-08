@@ -13,6 +13,7 @@ export const th = {
   interfaceLanguage: "ภาษาอินเตอร์เฟซ",
   translateTo: "แปลเป็น",
   phrasebook: "คู่มือวลีที่ใช้บ่อย",
+  saved: "บันทึกแล้ว",
   languages: {
     en: "อังกฤษ",
     zh: "จีน",

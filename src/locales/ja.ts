@@ -13,6 +13,7 @@ export const ja = {
   interfaceLanguage: "表示言語",
   translateTo: "翻訳先",
   phrasebook: "よく使うフレーズ集",
+  saved: "保存済み",
   languages: {
     en: "English（英語）",
     zh: "Chinese（中国語）",
